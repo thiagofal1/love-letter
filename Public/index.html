@@ -1,24 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I love u, babe</title>
-
-    <link rel="stylesheet" href="style.css">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>i love u, babe</title>
+  <style>
+    :root{--red:#bd2b06;--black:#090909;--muted:#efefef}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:#fff;color:var(--black);font-family:Arial,Helvetica,sans-serif;font-weight:300}
+    .page{max-width:1440px;margin:auto;padding:28px 32px 0}
+    .eyebrow{display:flex;justify-content:space-between;align-items:flex-start;font-size:13px;line-height:1.1}
+    .brand{font-size:15px;text-decoration:underline}.powered{font-size:7px;text-decoration:none;display:block;margin-top:2px}
+    .hero-title{text-align:center;font-size:clamp(52px,7.8vw,118px);font-weight:300;letter-spacing:-.055em;margin:75px 0 15px}
+    .hero-photo{width:100%;height:min(510px,36vw);min-height:300px;object-fit:cover;object-position:center 44%;filter:grayscale(1);display:block}
+    section{margin-top:62px}
+    .invite-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:82px;align-items:start}
+    h2{font-size:clamp(38px,4.2vw,66px);line-height:.9;letter-spacing:-.055em;font-weight:300;margin:0 0 26px}
+    .portrait{display:block;width:100%;max-width:680px;aspect-ratio:1.43/1;object-fit:cover;object-position:center 47%}
+    .form{padding-top:5px}.question{margin-bottom:38px}.question-title{font-size:15px;margin:0 0 14px}
+    .option{width:100%;border:0;border-radius:6px;background:var(--muted);min-height:120px;margin:0 0 10px;padding:18px;text-align:left;font:inherit;font-size:15px;cursor:pointer;transition:.18s}
+    .option:hover,.option:focus-visible{background:#ddd;transform:translateY(-1px)}
+    .option.selected{background:#111;color:#fff}
+    .intro{max-width:520px}.intro p{font-size:14px;line-height:1.45;margin-top:0}
+    .gallery{display:grid;grid-template-columns:.78fr .95fr 1.28fr .95fr .78fr;gap:18px;align-items:end;margin-top:95px}
+    .gallery img{width:100%;display:block;object-fit:cover;background:#000}.gallery img:nth-child(1),.gallery img:nth-child(5){height:310px}.gallery img:nth-child(2),.gallery img:nth-child(4){height:375px}.gallery img:nth-child(3){height:500px}
+    .movie-head{display:flex;justify-content:space-between;gap:30px;align-items:start;margin-bottom:30px}.movie-head h2{margin:0}.subtitle{font-size:22px}.details{font-size:14px;line-height:1.35;min-width:320px}
+    .movie-poster{width:100%;display:block;max-height:650px;object-fit:cover}
+    .final{display:grid;grid-template-columns:1fr 1fr;align-items:end;margin-top:38px;gap:65px}.final-message{font-size:clamp(38px,4.2vw,68px);line-height:.95;letter-spacing:-.055em;padding-bottom:10px}.final img{width:100%;max-height:600px;object-fit:cover;object-position:center 30%}
+    footer{background:var(--red);color:#fff;margin:0 -32px;padding:72px 32px 42px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;line-height:1.8}.love{font-weight:bold}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;background:#111;color:#fff;padding:13px 18px;border-radius:999px;font-size:14px;transition:.25s;z-index:10}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media (max-width:800px){
+      .page{padding:18px 16px 0}.hero-title{margin-top:58px}.hero-photo{height:52vw;min-height:230px}.invite-grid{grid-template-columns:1fr;gap:38px}.option{min-height:72px}.gallery{grid-template-columns:repeat(5,70vw);overflow-x:auto;scroll-snap-type:x mandatory;margin-right:-16px;padding-right:16px}.gallery img,.gallery img:nth-child(n){height:390px;scroll-snap-align:start}.movie-head{display:block}.details{margin-top:20px;min-width:0}.final{grid-template-columns:1fr;gap:28px}.final img{order:-1}footer{margin:0 -16px;padding:48px 16px 26px}.love{font-size:11px}}
+  </style>
 </head>
 <body>
+  <main class="page">
+    <header class="eyebrow"><div class="brand">LOVE-LETTER<span class="powered">POWERED BY THIGASFAL.DEV</span></div><div>836</div></header>
 
-    <main>
-        <h1>Eu te amo...</h1>
-        <p>Em breve terá surpresas por aqui, mas por enquanto, só queria te dizer que eu te amo muito.</p>
-        <p>Com todo o meu amor,</p> 
-        <p>Thiago</p>
-    </main>
+    <h1 class="hero-title">I LOVE U, IZZY</h1>
+    <img class="hero-photo" src="assets/img-000.png" alt="Casal se beijando diante de um espelho">
 
+    <section class="invite-grid">
+      <div><h2>TOPA IR PRO<br>CINEMA COMIGO?</h2><img class="portrait" src="assets/img-001.png" alt="Retrato diante de um espelho"></div>
+      <form class="form" id="inviteForm">
+        <div class="question" data-name="presenca"><p class="question-title">Você vem?</p><button class="option" type="button">SIM</button><button class="option" type="button">CLARO</button></div>
+        <div class="question" data-name="comida"><p class="question-title">Vai querer pipoca, hamburguer ou pizza?</p><button class="option" type="button">Pipocaaaaaaaa</button><button class="option" type="button">Hamburguer do TEX!!!</button><button class="option" type="button">PIXAR</button></div>
+      </form>
+    </section>
+
+    <section class="intro"><h2>AMAMOS CINEMA</h2><p>Por isso, no nosso dia 20, gostaria de assistir um bom filme com você no cinema!</p></section>
+
+    <div class="gallery" aria-label="Momentos no cinema">
+      <img src="assets/img-006.png" alt="Tela de cinema"><img src="assets/img-003.png" alt="Filme projetado"><img src="assets/img-002.png" alt="Cena de filme"><img src="assets/img-004.png" alt="Filme projetado"><img src="assets/img-005.png" alt="Cena do Homem-Aranha">
+    </div>
+
+    <section>
+      <div class="movie-head"><div><h2>O FILME</h2><div class="subtitle">CORAÇÃO PARTIDO</div></div><div class="details">CINEBLUE - Canaã dos Carajás<br>Data: 20 de Agosto de 2026<br>Traje: Vá bem deliciosa (como sempre)</div></div>
+      <img class="movie-poster" src="assets/img-008.png" alt="Pôster do filme Coração Partido">
+    </section>
+
+    <section class="final"><div class="final-message">TO ANSIOSO PRA TE VER,<br>DELICIA!!!!</div><img src="assets/img-010.png" alt="Casal diante de um espelho"></section>
+
+    <footer><div>LOVE-LETTER ©2026 | CONVITE<br>Todos os direitos reservados</div><div class="love">TE AMO</div></footer>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const toast=document.getElementById('toast');
+    document.querySelectorAll('.question').forEach(group=>{
+      group.querySelectorAll('.option').forEach(button=>button.addEventListener('click',()=>{
+        group.querySelectorAll('.option').forEach(b=>b.classList.remove('selected'));
+        button.classList.add('selected');
+        toast.textContent=`Escolha registrada: ${button.textContent.trim()} ❤️`;
+        toast.classList.add('show');
+        clearTimeout(window.toastTimer); window.toastTimer=setTimeout(()=>toast.classList.remove('show'),2200);
+      }));
+    });
+  </script>
 </body>
 </html>
