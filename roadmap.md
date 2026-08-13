@@ -34,7 +34,7 @@ A interface seguirá o conceito criado no mockup:
 ## Fase 1 — Setup
 
 * [x] Criar projeto com Vite + Vanilla TypeScript
-* [ ] Configurar Git
+* [x] Configurar Git
 * [x] Criar `.gitignore`
 * [x] Limpar arquivos padrão do Vite
 * [ ] Definir estrutura de diretórios
@@ -42,7 +42,7 @@ A interface seguirá o conceito criado no mockup:
 * [x] Criar estilos globais
 * [x] Configurar fontes
 * [x] Adicionar favicon
-* [ ] Criar primeiro commit
+* [x] Criar primeiro commit
 
 Estrutura planejada:
 
@@ -116,11 +116,11 @@ sobre uma composição de fotografias.
 
 ### Tarefas
 
-* [ ] Selecionar fotografias
-* [ ] Criar composição das imagens
-* [ ] Aplicar tratamento preto e branco
+* [x] Selecionar fotografias
+* [x] Criar composição das imagens
+* [x] Aplicar tratamento preto e branco
 * [x] Implementar título oversized
-* [ ] Trabalhar sobreposição entre texto e fotografias
+* [x] Trabalhar sobreposição entre texto e fotografias
 * [x] Criar comportamento responsivo
 * [ ] Adicionar animação inicial
 * [ ] Adicionar animações relacionadas ao scroll
@@ -153,12 +153,12 @@ JUST THE TWO OF US
 
 ### Tarefas
 
-* [ ] Criar playlist definitiva no Spotify
-* [ ] Obter URI/ID da playlist
-* [ ] Integrar Spotify iFrame API
-* [ ] Criar `spotify.ts`
-* [ ] Inicializar controller do Spotify
-* [ ] Implementar reprodução
+* [x] Criar playlist definitiva no Spotify
+* [x] Obter URI/ID da playlist
+* [x] Integrar Spotify iFrame API
+* [x] Criar `spotify.ts`
+* [x] Inicializar controller do Spotify
+* [x] Implementar reprodução
 * [x] Criar card visual do player
 * [x] Exibir capa da playlist
 * [x] Exibir título
@@ -302,7 +302,7 @@ AMO
 * [x] Adicionar `TE AMO`
 * [x] Manter identidade tipográfica
 * [x] Criar responsividade
-* [ ] Adicionar referência discreta ao `thigasfal.dev`
+* [x] Adicionar referência discreta ao `thigasfal.dev`
 
 ---
 
@@ -321,7 +321,7 @@ Depois que toda a interface estiver funcional, adicionar movimento.
 * [ ] Transições no Spotify Player
 * [ ] Animação do contador ao entrar na viewport
 * [ ] Hover states
-* [ ] Microinterações
+* [x] Microinterações
 * [x] Respeitar `prefers-reduced-motion`
 
 ### Regra
@@ -346,9 +346,9 @@ O projeto deverá funcionar corretamente em:
 ### Prioridades
 
 * [x] Tipografia fluida
-* [ ] Hero responsivo
-* [ ] Imagens sem deformação
-* [ ] Spotify utilizável no mobile
+* [x] Hero responsivo
+* [x] Imagens sem deformação
+* [x] Spotify utilizável no mobile
 * [x] Contador legível
 * [ ] Nenhum overflow horizontal acidental
 * [ ] Touch targets adequados
@@ -372,7 +372,7 @@ antes de criar grande quantidade de breakpoints.
 
 ### HTML
 
-* [ ] HTML semântico
+* [x] HTML semântico
 * [x] Hierarquia correta de headings
 * [x] Meta description
 * [ ] Open Graph
@@ -409,8 +409,8 @@ antes de criar grande quantidade de breakpoints.
 
 ## Fase 11 — Detalhes finais
 
-* [ ] Criar favicon personalizado
-* [ ] Definir título definitivo
+* [x] Criar favicon personalizado
+* [x] Definir título definitivo
 * [ ] Criar imagem de preview
 * [ ] Configurar Open Graph
 * [ ] Definir fotografia de compartilhamento
@@ -526,13 +526,13 @@ docs: create project documentation
 
 O **Love Letter v1.0** estará concluído quando possuir:
 
-* [ ] Identidade visual baseada no novo conceito
-* [ ] Hero com fotografias
-* [ ] Spotify funcional
-* [ ] Contador automático do relacionamento
-* [ ] Seção tipográfica `I LOVE U, IZZY`
-* [ ] Footer
-* [ ] Animações
+* [x] Identidade visual baseada no novo conceito
+* [x] Hero com fotografias
+* [x] Spotify funcional
+* [x] Contador automático do relacionamento
+* [x] Seção tipográfica `I LOVE U, IZZY`
+* [x] Footer
+* [x] Animações
 * [ ] Layout completamente responsivo
 * [ ] Deploy em produção
 
