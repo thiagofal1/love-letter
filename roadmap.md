@@ -163,10 +163,7 @@ JUST THE TWO OF US
 * [x] Exibir capa da playlist
 * [x] Exibir título
 * [x] Exibir informações complementares
-* [ ] Criar botão Play/Pause
-* [ ] Avaliar controles de próxima/anterior
 * [x] Exibir músicas em destaque
-* [ ] Implementar estados de loading/erro
 * [x] Adaptar player para dispositivos móveis
 
 ### Direção visual
