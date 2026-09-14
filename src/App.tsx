@@ -39,7 +39,7 @@ export default function App() {
             return;
           }
         } catch {
-          console.error('Falha ao carregar carta do Supabase.');
+          console.error('Falha ao carregar carta.');
         }
       }
 

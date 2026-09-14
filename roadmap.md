@@ -1,4 +1,4 @@
-# 💌 Love Letter SaaS — Roadmap do Projeto
+# 💌 Love Letter — Roadmap do Projeto
 
 > Plataforma SaaS onde qualquer pessoa pode criar, personalizar e compartilhar uma **carta de amor viva e interativa** para seu parceiro(a).
 
@@ -78,7 +78,7 @@ love-letter/
 
 ### ⏳ Fase 4 — Persistência & Supabase Backend (Em Andamento)
 - [x] Integração da SDK do Supabase em `src/lib/supabase.ts`.
-- [ ] Criar tabela `letters` no banco de dados do Supabase:
+- [x] Criar tabela `letters` no banco de dados do Supabase:
   ```sql
   create table letters (
     id uuid default gen_random_uuid() primary key,
@@ -102,7 +102,7 @@ love-letter/
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
   );
   ```
-- [ ] Testar salvamento e leitura de cartas reais cadastradas no Supabase.
+- [x] Testar salvamento e leitura de cartas reais cadastradas no Supabase.
 
 ### 🚀 Fase 5 — Upload de Mídia & Galeria do Casal (Próxima)
 - [ ] Configurar bucket `love-photos` no Supabase Storage.
