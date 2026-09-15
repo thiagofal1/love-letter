@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { LoveLetterData } from '../types/letter';
 import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { parseSpotifyUri } from '../spotify';
@@ -79,6 +80,21 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
   const letter = { ...DEFAULT_LOVE_LETTER, ...data };
   const counter = useLiveCounter(letter.relationship_start_date);
   const [activeMemory, setActiveMemory] = useState<number | null>(null);
+  const [activePhoto, setActivePhoto] = useState<number | null>(null);
+  const photos = letter.photos || [];
+
+  useEffect(() => {
+    if (activePhoto === null) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setActivePhoto(null);
+      if (event.key === 'ArrowLeft') setActivePhoto((current) => current === null ? null : (current - 1 + photos.length) % photos.length);
+      if (event.key === 'ArrowRight') setActivePhoto((current) => current === null ? null : (current + 1) % photos.length);
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activePhoto, photos.length]);
 
   const marqueeText = Array(6).fill(letter.marquee_text || 'EU TE AMO · ').join('');
   const spotifyEmbedUrl = buildSpotifyEmbedUrl(letter.spotify_playlist_url);
@@ -194,6 +210,33 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
                 loading="lazy"
               />
             </div>
+          </RevealSection>
+        </section>
+      )}
+
+      {/* Galeria */}
+      {photos.length > 0 && (
+        <section className="py-24 px-6 overflow-hidden">
+          <RevealSection className="max-w-6xl mx-auto">
+            <p className="text-xs tracking-[0.3em] uppercase mb-12 text-center font-mono text-muted-foreground">
+              Nossos momentos favoritos
+            </p>
+            <div className="photo-carousel pb-4">
+              {photos.map((photo, index) => (
+                <button
+                  key={photo}
+                  type="button"
+                  onClick={() => setActivePhoto(index)}
+                  className="photo-card group relative aspect-[4/5] shrink-0 overflow-hidden rounded-sm border border-border bg-card text-left focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <img src={photo} alt={`Momento ${index + 1} de ${letter.author_name} e ${letter.partner_name}`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/85 to-transparent px-4 pb-4 pt-12 font-mono text-[0.65rem] tracking-[0.2em] text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                    VER FOTO {String(index + 1).padStart(2, '0')}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 text-center text-xs font-mono tracking-widest text-muted-foreground">DESLIZE PARA REVIVER</p>
           </RevealSection>
         </section>
       )}
@@ -326,6 +369,16 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
           </a>
         )}
       </footer>
+
+      {activePhoto !== null && photos[activePhoto] && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/95 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`Foto ${activePhoto + 1} da galeria`} onClick={() => setActivePhoto(null)}>
+          <button type="button" onClick={() => setActivePhoto(null)} aria-label="Fechar galeria" className="absolute right-5 top-5 z-10 rounded-full border border-border p-2 text-foreground hover:border-primary hover:text-primary"><X className="h-5 w-5" /></button>
+          {photos.length > 1 && <button type="button" onClick={(event) => { event.stopPropagation(); setActivePhoto((activePhoto - 1 + photos.length) % photos.length); }} aria-label="Foto anterior" className="absolute left-3 md:left-8 rounded-full border border-border bg-card/80 p-2 text-foreground hover:border-primary hover:text-primary"><ChevronLeft className="h-6 w-6" /></button>}
+          <img src={photos[activePhoto]} alt={`Momento ${activePhoto + 1} de ${letter.author_name} e ${letter.partner_name}`} className="max-h-[88vh] max-w-[calc(100vw-5rem)] rounded-sm object-contain shadow-2xl" onClick={(event) => event.stopPropagation()} />
+          {photos.length > 1 && <button type="button" onClick={(event) => { event.stopPropagation(); setActivePhoto((activePhoto + 1) % photos.length); }} aria-label="Próxima foto" className="absolute right-3 md:right-8 rounded-full border border-border bg-card/80 p-2 text-foreground hover:border-primary hover:text-primary"><ChevronRight className="h-6 w-6" /></button>}
+          <span className="absolute bottom-5 font-mono text-xs tracking-[0.2em] text-muted-foreground">{String(activePhoto + 1).padStart(2, '0')} / {String(photos.length).padStart(2, '0')}</span>
+        </div>
+      )}
     </div>
   );
 }

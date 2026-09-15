@@ -2,10 +2,11 @@ import { useState } from 'react';
 import type { LoveLetterData, MemoryItem } from '../types/letter';
 import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { LoveLetterViewer } from './LoveLetterViewer';
+import { PhotoUploader } from './PhotoUploader';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
   Heart, Save, Eye, Sparkles, Music,
-  Calendar, Plus, Trash2, Link, Check, ExternalLink,
+  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus,
 } from 'lucide-react';
 
 function generateSlug(partner: string, author: string) {
@@ -19,11 +20,12 @@ interface LoveLetterEditorProps {
 
 export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLetterEditorProps) {
   const [formData, setFormData] = useState<LoveLetterData>(initialData);
-  const [activeTab, setActiveTab] = useState<'geral' | 'mensagens' | 'memorias' | 'musica'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'mensagens' | 'memorias' | 'fotos' | 'musica'>('geral');
   const [viewMode, setViewMode] = useState<'split' | 'preview'>('split');
   const [isSaving, setIsSaving] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [publishNotice, setPublishNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   function updateField<K extends keyof LoveLetterData>(key: K, value: LoveLetterData[K]) {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -63,6 +65,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
   async function handlePublish() {
     setIsSaving(true);
     setShareUrl(null);
+    setPublishNotice(null);
 
     try {
       const slug = formData.slug || generateSlug(formData.partner_name, formData.author_name);
@@ -70,17 +73,19 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
       if (isSupabaseConfigured && supabase) {
         const { error } = await supabase
           .from('letters')
-          .upsert({ slug, ...formData })
-          .select()
-          .single();
+          .upsert({ ...formData, slug }, { onConflict: 'slug' });
         if (error) throw error;
         setShareUrl(`${window.location.origin}/?l=${slug}`);
+        setPublishNotice({ type: 'success', text: 'Carta salva no Supabase. Seu link está pronto.' });
       } else {
         const encoded = btoa(encodeURIComponent(JSON.stringify(formData)));
         setShareUrl(`${window.location.origin}/?d=${encoded}`);
+        setPublishNotice({ type: 'success', text: 'Carta salva no link local. Configure o Supabase para persistência.' });
       }
     } catch (err) {
       console.error('Erro ao publicar:', err);
+      const message = err instanceof Error ? err.message : 'Erro desconhecido ao publicar.';
+      setPublishNotice({ type: 'error', text: `Não foi possível salvar: ${message}` });
     } finally {
       setIsSaving(false);
     }
@@ -97,6 +102,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
     { id: 'geral' as const, label: 'Geral', icon: Calendar },
     { id: 'mensagens' as const, label: 'Mensagens', icon: Heart },
     { id: 'memorias' as const, label: 'Timeline', icon: Sparkles },
+    { id: 'fotos' as const, label: 'Fotos', icon: ImagePlus },
     { id: 'musica' as const, label: 'Música & Fim', icon: Music },
   ];
 
@@ -149,6 +155,16 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
+        </div>
+      )}
+
+      {publishNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`border-b px-6 py-2 text-xs font-mono ${publishNotice.type === 'success' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-red-400/40 bg-red-950/30 text-red-200'}`}
+        >
+          {publishNotice.text}
         </div>
       )}
 
@@ -234,6 +250,13 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
                   <Field label="Mensagem de Encerramento" value={formData.closing_message} onChange={(v) => updateField('closing_message', v)} multiline />
                   <Field label="Texto do Rodapé" value={formData.footer_text} onChange={(v) => updateField('footer_text', v)} />
                 </div>
+              )}
+
+              {activeTab === 'fotos' && (
+                <PhotoUploader
+                  photos={formData.photos || []}
+                  onChange={(photos) => updateField('photos', photos)}
+                />
               )}
             </div>
           </aside>

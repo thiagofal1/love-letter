@@ -174,3 +174,20 @@ body {
 .timeline-line {
   background: linear-gradient(to bottom, transparent, #c9a07a 20%, #c9a07a 80%, transparent);
 }
+
+.photo-carousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a07a transparent;
+}
+
+.photo-carousel::-webkit-scrollbar { height: 3px; }
+.photo-carousel::-webkit-scrollbar-thumb { background: #c9a07a; }
+
+.photo-card {
+  width: min(72vw, 290px);
+  scroll-snap-align: center;
+}

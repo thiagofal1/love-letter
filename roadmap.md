@@ -104,10 +104,10 @@ love-letter/
   ```
 - [x] Testar salvamento e leitura de cartas reais cadastradas no Supabase.
 
-### 🚀 Fase 5 — Upload de Mídia & Galeria do Casal (Próxima)
-- [ ] Configurar bucket `love-photos` no Supabase Storage.
-- [ ] Adicionar componente de upload de fotos no Studio Editor.
-- [ ] Exibir galeria de fotos do casal no `LoveLetterViewer` com efeito carrossel/lightbox.
+### 🚀 Fase 5 — Upload de Mídia & Galeria do Casal (Em Andamento)
+- [x] Preparar bucket `love-photos` e políticas públicas iniciais em `supabase/storage.sql` (executar no SQL Editor do Supabase).
+- [x] Adicionar componente de upload de fotos no Studio Editor, com validação de formato/tamanho e feedback de erro.
+- [x] Exibir galeria de fotos do casal no `LoveLetterViewer` com carrossel horizontal e lightbox acessível.
 
 ### 🔐 Fase 6 — Autenticação & Dashboard do Criador
 - [ ] Tela de Login / Cadastro (Supabase Auth por E-mail ou Google).
