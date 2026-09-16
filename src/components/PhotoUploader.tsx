@@ -60,7 +60,15 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
       onChange([...photos, ...uploadedUrls]);
     } catch (uploadError) {
       console.error('Erro ao enviar foto:', uploadError);
-      setError('Não foi possível enviar a foto. Confirme se o bucket e as políticas foram configurados.');
+      const uploadMessage = uploadError instanceof Error ? uploadError.message : 'erro desconhecido';
+      const normalizedMessage = uploadMessage.toLowerCase();
+      if (normalizedMessage.includes('bucket not found') || normalizedMessage.includes('nosuchbucket')) {
+        setError(`Bucket "${BUCKET}" não encontrado neste projeto Supabase. Execute supabase/storage.sql no projeto configurado no .env.`);
+      } else if (normalizedMessage.includes('row-level security') || normalizedMessage.includes('policy')) {
+        setError('Upload bloqueado por política de Storage. Execute novamente supabase/storage.sql neste projeto.');
+      } else {
+        setError(`Não foi possível enviar a foto: ${uploadMessage}`);
+      }
     } finally {
       setIsUploading(false);
       if (inputRef.current) inputRef.current.value = '';
