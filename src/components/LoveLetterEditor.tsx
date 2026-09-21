@@ -4,9 +4,11 @@ import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { LoveLetterViewer } from './LoveLetterViewer';
 import { PhotoUploader } from './PhotoUploader';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthDialog } from './AuthDialog';
 import {
   Heart, Save, Eye, Sparkles, Music,
-  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus,
+  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus, UserCircle, LogOut
 } from 'lucide-react';
 
 function generateSlug(partner: string, author: string) {
@@ -26,6 +28,9 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [publishNotice, setPublishNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const { user, signOut } = useAuth();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   function updateField<K extends keyof LoveLetterData>(key: K, value: LoveLetterData[K]) {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -71,9 +76,17 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
       const slug = formData.slug || generateSlug(formData.partner_name, formData.author_name);
 
       if (isSupabaseConfigured && supabase) {
+        if (!user) {
+          setIsAuthOpen(true);
+          setPublishNotice({ type: 'error', text: 'Faça login para salvar a carta no Supabase.' });
+          setIsSaving(false);
+          return;
+        }
+
+        const dataToSave = { ...formData, slug, user_id: user.id };
         const { error } = await supabase
           .from('letters')
-          .upsert({ ...formData, slug }, { onConflict: 'slug' });
+          .upsert(dataToSave, { onConflict: 'slug' });
         if (error) throw error;
         setShareUrl(`${window.location.origin}/?l=${slug}`);
         setPublishNotice({ type: 'success', text: 'Carta salva no Supabase. Seu link está pronto.' });
@@ -108,6 +121,8 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {isAuthOpen && <AuthDialog onClose={() => setIsAuthOpen(false)} />}
+      
       {/* Navbar */}
       <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between z-50">
         <div className="flex items-center gap-3">
@@ -118,6 +133,24 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
         </div>
 
         <div className="flex items-center gap-3">
+          {user ? (
+            <button
+              onClick={signOut}
+              className="px-3 py-1.5 text-xs font-mono flex items-center gap-2 text-muted-foreground hover:text-red-400 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sair
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsAuthOpen(true)}
+              className="px-3 py-1.5 text-xs font-mono flex items-center gap-2 text-primary hover:bg-primary/10 rounded transition-colors"
+            >
+              <UserCircle className="w-3.5 h-3.5" />
+              Entrar
+            </button>
+          )}
+
           <button
             onClick={() => setViewMode(viewMode === 'split' ? 'preview' : 'split')}
             className="px-3 py-1.5 rounded border border-border text-xs font-mono flex items-center gap-2 hover:border-primary transition-colors"

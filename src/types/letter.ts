@@ -6,6 +6,7 @@ export interface MemoryItem {
 
 export interface LoveLetterData {
   id?: string;
+  user_id?: string | null;
   slug?: string;
   partner_name: string;
   author_name: string;
