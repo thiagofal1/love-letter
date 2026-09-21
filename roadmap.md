@@ -76,7 +76,7 @@ love-letter/
   - [x] Acesso via `?l=slug` busca a carta no Supabase.
   - [x] Fallback via `?d=base64` decodifica e exibe a carta sem backend.
 
-### ⏳ Fase 4 — Persistência & Supabase Backend (Em Andamento)
+### ✅ Fase 4 — Persistência & Supabase Backend (Concluído)
 - [x] Integração da SDK do Supabase em `src/lib/supabase.ts`.
 - [x] Criar tabela `letters` no banco de dados do Supabase:
   ```sql
@@ -104,7 +104,7 @@ love-letter/
   ```
 - [x] Testar salvamento e leitura de cartas reais cadastradas no Supabase.
 
-### 🚀 Fase 5 — Upload de Mídia & Galeria do Casal (Em Andamento)
+### ✅ Fase 5 — Upload de Mídia & Galeria do Casal (Concluído)
 - [x] Preparar bucket `love-photos` e políticas públicas iniciais em `supabase/storage.sql` (executar no SQL Editor do Supabase).
 - [x] Adicionar componente de upload de fotos no Studio Editor, com validação de formato/tamanho e feedback de erro.
 - [x] Exibir galeria de fotos do casal no `LoveLetterViewer` com carrossel horizontal e lightbox acessível.
