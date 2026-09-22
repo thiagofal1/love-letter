@@ -16,6 +16,7 @@ export default function App() {
   const [letterData, setLetterData] = useState<LoveLetterData | null>(null);
   const [editorData, setEditorData] = useState<LoveLetterData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNotFound, setIsNotFound] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -116,6 +117,8 @@ export default function App() {
         CARREGANDO...
       </div>
     );
+  } else if (isNotFound) {
+    content = <NotFound />;
   } else if (currentView === 'dashboard') {
     content = <Dashboard onNavigate={handleNavigate} />;
   } else if (currentView === 'viewer' && letterData) {
