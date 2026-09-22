@@ -79,14 +79,23 @@ function FloatingEmojis() {
   const [items, setItems] = useState<Array<{ id: number; emoji: string; left: string; delay: string; duration: string; size: string }>>([]);
 
   useEffect(() => {
-    const generated = Array.from({ length: 25 }).map((_, i) => ({
-      id: i,
-      emoji: CLASSIC_RED_EMOJIS[Math.floor(Math.random() * CLASSIC_RED_EMOJIS.length)],
-      left: `${Math.random() * 100}vw`,
-      delay: `${Math.random() * 20}s`,
-      duration: `${15 + Math.random() * 15}s`,
-      size: `${1.5 + Math.random() * 1.5}rem`
-    }));
+    const generated = Array.from({ length: 25 }).map((_, i) => {
+      // 50% chance of being on the left side (5vw to 25vw)
+      // 50% chance of being on the right side (75vw to 95vw)
+      const isLeft = Math.random() > 0.5;
+      const leftPos = isLeft 
+        ? 5 + Math.random() * 20 
+        : 75 + Math.random() * 20;
+
+      return {
+        id: i,
+        emoji: CLASSIC_RED_EMOJIS[Math.floor(Math.random() * CLASSIC_RED_EMOJIS.length)],
+        left: `${leftPos}vw`,
+        delay: `${Math.random() * 20}s`,
+        duration: `${15 + Math.random() * 15}s`,
+        size: `${1.5 + Math.random() * 1.5}rem`
+      };
+    });
     setItems(generated);
   }, []);
 
