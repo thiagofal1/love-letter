@@ -119,16 +119,16 @@ love-letter/
 - [x] Temas de cores adicionais (*Classic Red*, *Pastel Rose*, *Dark Velvet*).
 - [x] Integração com gateway de pagamento (Mercado Pago).
 
-### 🔎 Fase 8 - SEO, dados e privacidade
-- [ ] Dados no rodape | Incluir contatos, redes, politicas, identificacao e ano dinamico.
+### ✅ Fase 8 - SEO, dados e privacidade (Concluído)
+- [x] Dados no rodape | Incluir contatos, redes, politicas, identificacao e ano dinamico.
 - [x] Titulos e descricoes | `title`, descricao e idioma ja existem; revisar URL canonica e hierarquia de headings.
 - [x] Meta descriptions | A home ja possui meta description; criar/validar descricoes para futuras paginas ou rotas.
 - [x] Schema.org | Adicionar JSON-LD Person e ProfessionalService/WebSite com dados confirmados.
 - [x] sitemap.xml | Gerar e publicar sitemap com a URL canonica.
 - [x] robots.txt | Publicar regras e referencia ao sitemap.
-- [ ] Google Analytics | Configurar GA4/GTM usando o ID fornecido, condicionado ao consentimento.
+- [x] Google Analytics | Configurar GA4/GTM usando o ID fornecido, condicionado ao consentimento.
 - [x] Cookies | Criar banner com aceitar, recusar e preferencias; bloquear analytics antes da permissao.
-- [ ] ERROR 404 | Criar pagina personalizada de erro 404.
+- [x] ERROR 404 | Criar pagina personalizada de erro 404.
 
 ### 🔒 Fase 9 - Seguranca
 - [ ] Configuracoes de seguranca | Aplicar CSP gradual, HSTS apos HTTPS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy e antispam/rate limit no endpoint. Revisar segredos e restaurar `.env.example` sem credenciais.

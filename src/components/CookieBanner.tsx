@@ -9,12 +9,23 @@ export function CookieBanner() {
     const consent = localStorage.getItem('cookie_consent');
     if (!consent) {
       setIsVisible(true);
+    } else if (consent === 'accepted') {
+      // @ts-ignore
+      if (typeof window !== 'undefined' && window.gtag) {
+        // @ts-ignore
+        window.gtag('consent', 'update', { 'analytics_storage': 'granted' });
+      }
     }
   }, []);
 
   const accept = () => {
     localStorage.setItem('cookie_consent', 'accepted');
     setIsVisible(false);
+    // @ts-ignore
+    if (typeof window !== 'undefined' && window.gtag) {
+      // @ts-ignore
+      window.gtag('consent', 'update', { 'analytics_storage': 'granted' });
+    }
   };
 
   if (!isVisible) return null;
