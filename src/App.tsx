@@ -74,14 +74,20 @@ export default function App() {
             .eq('slug', slug)
             .single();
 
-          if (data && !error) {
-            setLetterData(data as LoveLetterData);
-            setCurrentView('viewer');
+          if (error || !data) {
+            setIsNotFound(true);
             setLoading(false);
             return;
           }
+
+          setLetterData(data as LoveLetterData);
+          setCurrentView('viewer');
+          setLoading(false);
+          return;
         } catch {
-          console.error('Falha ao carregar carta.');
+          setIsNotFound(true);
+          setLoading(false);
+          return;
         }
       }
 
