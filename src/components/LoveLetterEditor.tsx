@@ -378,7 +378,19 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                           <button
                             key={theme.id}
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              if (theme.promotional) {
+                                const hasVisited = localStorage.getItem('has_visited_thigasfal');
+                                if (!hasVisited) {
+                                  e.preventDefault();
+                                  window.open('https://thigasfal.dev', '_blank');
+                                  localStorage.setItem('has_visited_thigasfal', 'true');
+                                  // Can show a quick notice so the user knows what happened
+                                  setPublishNotice({ type: 'success', text: 'Obrigado por visitar! O tema especial foi desbloqueado.' });
+                                  updateField('theme_id', theme.id);
+                                  return;
+                                }
+                              }
                               updateField('theme_id', theme.id);
                             }}
                             className={`relative p-3 rounded border text-left transition-all ${
@@ -405,6 +417,14 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                               <span className="absolute top-2 right-2 flex items-center gap-1">
                                 {isLocked && <Lock className="w-3 h-3 text-muted-foreground" />}
                                 <span className="text-[9px] font-mono text-primary uppercase">Premium</span>
+                              </span>
+                            )}
+
+                            {/* Promotional Badge */}
+                            {theme.promotional && (
+                              <span className="absolute top-2 right-2 flex items-center gap-1">
+                                {!localStorage.getItem('has_visited_thigasfal') && <ExternalLink className="w-3 h-3 text-muted-foreground" />}
+                                <span className="text-[9px] font-mono text-primary uppercase">Promo</span>
                               </span>
                             )}
 

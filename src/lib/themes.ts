@@ -3,6 +3,7 @@ export interface Theme {
   name: string;
   description: string;
   premium: boolean;
+  promotional?: boolean;
   colors: Record<string, string>;
 }
 
@@ -90,9 +91,29 @@ export const THEMES: Theme[] = [
       'muted': '#150d26',
       'muted-foreground': '#6b5c8a',
       'accent': '#aa8eed',
-      'accent-foreground': '#080512',
-      'border': '#261a40',
-      'ring': '#8a6bcc',
+    },
+  },
+  {
+    id: 'thigasfal',
+    name: 'ThigasFal',
+    description: 'Edição Especial de Criador (Gratuito)',
+    premium: false,
+    promotional: true,
+    colors: {
+      'background': '#0D0D0D',
+      'foreground': '#EFEEE0',
+      'card': '#1A1A1A',
+      'card-foreground': '#EFEEE0',
+      'primary': '#D3AF37',
+      'primary-foreground': '#0D0D0D',
+      'secondary': '#212121',
+      'secondary-foreground': '#EFEEE0',
+      'muted': '#2A2A2A',
+      'muted-foreground': '#888880',
+      'accent': '#D3AF37',
+      'accent-foreground': '#0D0D0D',
+      'border': '#2E2E2E',
+      'ring': '#D3AF37',
     },
   },
 ];
