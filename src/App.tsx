@@ -4,7 +4,10 @@ import { DEFAULT_LOVE_LETTER } from './types/letter';
 import { LoveLetterViewer } from './components/LoveLetterViewer';
 import { LoveLetterEditor } from './components/LoveLetterEditor';
 import { Dashboard } from './components/Dashboard';
+import { CookieBanner } from './components/CookieBanner';
+import { NotFound } from './components/NotFound';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { AuthProvider } from './contexts/AuthContext';
 
 type AppView = 'editor' | 'viewer' | 'dashboard';
 
@@ -106,26 +109,32 @@ export default function App() {
     }
   }
 
+  let content;
   if (loading) {
-    return (
+    content = (
       <div className="min-h-screen bg-background text-primary flex items-center justify-center font-mono text-sm tracking-widest">
         CARREGANDO...
       </div>
     );
-  }
-
-  if (currentView === 'dashboard') {
-    return <Dashboard onNavigate={handleNavigate} />;
-  }
-
-  if (currentView === 'viewer' && letterData) {
-    return <LoveLetterViewer data={letterData} />;
+  } else if (currentView === 'dashboard') {
+    content = <Dashboard onNavigate={handleNavigate} />;
+  } else if (currentView === 'viewer' && letterData) {
+    content = <LoveLetterViewer data={letterData} />;
+  } else {
+    content = (
+      <LoveLetterEditor
+        initialData={editorData || DEFAULT_LOVE_LETTER}
+        onNavigate={handleNavigate}
+      />
+    );
   }
 
   return (
-    <LoveLetterEditor
-      initialData={editorData || DEFAULT_LOVE_LETTER}
-      onNavigate={handleNavigate}
-    />
+    <AuthProvider>
+      <div className="min-h-screen bg-background text-foreground relative selection:bg-primary/30 selection:text-primary">
+        {content}
+        <CookieBanner />
+      </div>
+    </AuthProvider>
   );
 }

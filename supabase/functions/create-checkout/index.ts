@@ -50,7 +50,6 @@ serve(async (req) => {
       body: JSON.stringify({
         reason: "Love Letter Premium",
         external_reference: user.id,
-        payer_email: user.email,
         auto_recurring: {
           frequency: 1,
           frequency_type: "months",
