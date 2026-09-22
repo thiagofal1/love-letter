@@ -106,16 +106,16 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
           .from('letters')
           .upsert(dataToSave, { onConflict: 'slug' });
         if (error) throw error;
+        setPublishNotice({ type: 'success', text: 'Sua carta de amor foi publicada com sucesso!' });
         setShareUrl(`${window.location.origin}/?l=${slug}`);
-        setPublishNotice({ type: 'success', text: 'Carta salva. Seu link está pronto.' });
       } else {
         const encoded = btoa(encodeURIComponent(JSON.stringify(formData)));
         setShareUrl(`${window.location.origin}/?d=${encoded}`);
         setPublishNotice({ type: 'success', text: 'Carta salva no link local. Configure o Supabase para persistência.' });
       }
-    } catch (err) {
-      console.error('Erro ao publicar:', err);
-      const message = err instanceof Error ? err.message : 'Erro desconhecido ao publicar.';
+    } catch (err: any) {
+      console.error('Publish error:', err);
+      const message = err.message || err.error_description || err.toString();
       setPublishNotice({ type: 'error', text: `Não foi possível salvar: ${message}` });
     } finally {
       setIsSaving(false);
