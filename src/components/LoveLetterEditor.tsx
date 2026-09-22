@@ -6,7 +6,8 @@ import { PhotoUploader } from './PhotoUploader';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthDialog } from './AuthDialog';
-import { THEMES, applyTheme } from '../lib/themes';
+import { PremiumModal } from './PremiumModal';
+import { THEMES, applyTheme, getTheme } from '../lib/themes';
 import {
   Heart, Save, Eye, Sparkles, Music,
   Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus, UserCircle, LogOut, LayoutDashboard, Crown, Lock
@@ -37,6 +38,8 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
 
   const { user, signOut } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   function updateField<K extends keyof LoveLetterData>(key: K, value: LoveLetterData[K]) {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -74,6 +77,15 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
   }
 
   async function handlePublish() {
+    // Check if user is trying to save a premium theme without being premium
+    const selectedTheme = getTheme(formData.theme_id || 'warm-gold');
+    if (selectedTheme.premium && !formData.is_premium) {
+        setIsPremiumModalOpen(true);
+        // Revert to free theme
+        updateField('theme_id', 'warm-gold');
+        return;
+    }
+
     setIsSaving(true);
     setShareUrl(null);
     setPublishNotice(null);
@@ -119,11 +131,13 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
 
   async function handlePremiumCheckout() {
     if (!user) {
+        setIsPremiumModalOpen(false);
         setIsAuthOpen(true);
         return;
     }
 
     try {
+        setIsCheckoutLoading(true);
         setPublishNotice({ type: 'success', text: 'Gerando checkout do Mercado Pago...' });
         const { data: { session } } = await supabase!.auth.getSession();
         
@@ -148,6 +162,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     } catch (err) {
         console.error(err);
         setPublishNotice({ type: 'error', text: 'Erro ao conectar com Mercado Pago.' });
+        setIsCheckoutLoading(false);
     }
   }
 
@@ -163,6 +178,12 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {isAuthOpen && <AuthDialog onClose={() => setIsAuthOpen(false)} />}
+      <PremiumModal 
+        isOpen={isPremiumModalOpen} 
+        onClose={() => setIsPremiumModalOpen(false)} 
+        onCheckout={handlePremiumCheckout}
+        isLoading={isCheckoutLoading}
+      />
       
       {/* Navbar */}
       <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between z-50">
@@ -430,9 +451,12 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                         </p>
                       </div>
                     ) : (
-                      <div className="p-4 rounded border border-dashed border-border text-center">
-                        <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-xs text-muted-foreground">
+                      <div 
+                        onClick={() => setIsPremiumModalOpen(true)}
+                        className="p-4 rounded border border-dashed border-border text-center cursor-pointer hover:border-primary/50 transition-colors group"
+                      >
+                        <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2 group-hover:text-primary transition-colors" />
+                        <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                           Disponível no plano Premium
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-1">
@@ -456,9 +480,12 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                         </p>
                       </div>
                     ) : (
-                      <div className="p-4 rounded border border-dashed border-border text-center">
-                        <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-xs text-muted-foreground">
+                      <div 
+                        onClick={() => setIsPremiumModalOpen(true)}
+                        className="p-4 rounded border border-dashed border-border text-center cursor-pointer hover:border-primary/50 transition-colors group"
+                      >
+                        <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2 group-hover:text-primary transition-colors" />
+                        <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                           Disponível no plano Premium
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-1">
