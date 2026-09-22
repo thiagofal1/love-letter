@@ -275,8 +275,9 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
 
       {/* Timeline de Memórias */}
       {letter.memories && letter.memories.length > 0 && (
-        <section className="py-24 px-6 bg-[#0f0c09]">
-          <RevealSection className="max-w-2xl mx-auto">
+        <section className="py-24 px-6 relative">
+          <div className="absolute inset-0 bg-background pointer-events-none" />
+          <RevealSection className="max-w-2xl mx-auto relative z-10">
             <p className="text-xs tracking-[0.3em] uppercase mb-20 text-center font-mono text-muted-foreground">
               Momentos que guardarei para sempre
             </p>

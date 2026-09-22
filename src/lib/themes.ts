@@ -107,6 +107,6 @@ export function applyTheme(themeId: string) {
 
   const root = document.documentElement;
   for (const [key, value] of Object.entries(theme.colors)) {
-    root.style.setProperty(`--color-${key}`, value);
+    root.style.setProperty(`--theme-${key}`, value);
   }
 }

@@ -5,20 +5,20 @@
 @import 'tailwindcss';
 
 @theme inline {
-  --color-background: #0d0a08;
-  --color-foreground: #f0ebe3;
-  --color-card: #16120e;
-  --color-card-foreground: #e8e0d4;
-  --color-primary: #c9a07a;
-  --color-primary-foreground: #0d0a08;
-  --color-secondary: #211c16;
-  --color-secondary-foreground: #b8aa98;
-  --color-muted: #1e1812;
-  --color-muted-foreground: #7a6e62;
-  --color-accent: #e8b89a;
-  --color-accent-foreground: #0d0a08;
-  --color-border: #2a2318;
-  --color-ring: #c9a07a;
+  --color-background: var(--theme-background, #0d0a08);
+  --color-foreground: var(--theme-foreground, #f0ebe3);
+  --color-card: var(--theme-card, #16120e);
+  --color-card-foreground: var(--theme-card-foreground, #e8e0d4);
+  --color-primary: var(--theme-primary, #c9a07a);
+  --color-primary-foreground: var(--theme-primary-foreground, #0d0a08);
+  --color-secondary: var(--theme-secondary, #211c16);
+  --color-secondary-foreground: var(--theme-secondary-foreground, #b8aa98);
+  --color-muted: var(--theme-muted, #1e1812);
+  --color-muted-foreground: var(--theme-muted-foreground, #7a6e62);
+  --color-accent: var(--theme-accent, #e8b89a);
+  --color-accent-foreground: var(--theme-accent-foreground, #0d0a08);
+  --color-border: var(--theme-border, #2a2318);
+  --color-ring: var(--theme-ring, #c9a07a);
   --radius: 2px;
   --font-display: 'Fraunces', serif;
   --font-body: 'Lora', serif;
@@ -26,8 +26,8 @@
 }
 
 :root {
-  --background: #0d0a08;
-  --foreground: #f0ebe3;
+  --background: var(--color-background, #0d0a08);
+  --foreground: var(--color-foreground, #f0ebe3);
 }
 
 * {
@@ -133,7 +133,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #f0ebe3 0%, #c9a07a 50%, #e8b89a 100%);
+  background: linear-gradient(135deg, var(--color-foreground, #f0ebe3) 0%, var(--color-primary, #c9a07a) 50%, var(--color-accent, #e8b89a) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -142,7 +142,7 @@ body {
 }
 
 .vignette {
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(13,10,8,0.85) 100%);
+  background: radial-gradient(ellipse at center, transparent 40%, var(--color-background, rgba(13,10,8,0.85)) 100%);
   pointer-events: none;
 }
 
@@ -172,7 +172,7 @@ body {
 }
 
 .timeline-line {
-  background: linear-gradient(to bottom, transparent, #c9a07a 20%, #c9a07a 80%, transparent);
+  background: linear-gradient(to bottom, transparent, var(--color-primary, #c9a07a) 20%, var(--color-primary, #c9a07a) 80%, transparent);
 }
 
 .photo-carousel {
@@ -181,11 +181,11 @@ body {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: thin;
-  scrollbar-color: #c9a07a transparent;
+  scrollbar-color: var(--color-primary, #c9a07a) transparent;
 }
 
 .photo-carousel::-webkit-scrollbar { height: 3px; }
-.photo-carousel::-webkit-scrollbar-thumb { background: #c9a07a; }
+.photo-carousel::-webkit-scrollbar-thumb { background: var(--color-primary, #c9a07a); }
 
 .photo-card {
   width: min(72vw, 290px);
