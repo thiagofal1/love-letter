@@ -95,7 +95,7 @@ export const THEMES: Theme[] = [
   },
   {
     id: 'thigasfal',
-    name: 'ThigasFal',
+    name: 'Escolha do Desenvolvedor',
     description: 'Edição Especial de Criador (Gratuito)',
     premium: false,
     promotional: true,

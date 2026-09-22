@@ -261,20 +261,27 @@ html.theme-thigasfal::before {
 }
 
 /* Ajustes de layout para a fonte Press Start 2P (muito larga) */
+
+/* Global clamp for all pixelated text to override inline styles */
+html.theme-thigasfal .font-display {
+  font-size: clamp(0.7rem, 2.2vw, 1.3rem) !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0 !important;
+}
+
 html.theme-thigasfal .counter-digit {
-  font-size: clamp(2.5rem, 8vw, 6rem) !important;
+  font-size: clamp(1.2rem, 5vw, 3rem) !important;
 }
 
 html.theme-thigasfal h1 span.gradient-text {
-  font-size: clamp(1.2rem, 4vw, 3rem) !important;
-  line-height: 1.5;
+  font-size: clamp(1rem, 3.5vw, 2.2rem) !important;
+  line-height: 1.4 !important;
 }
 
 html.theme-thigasfal h2 {
-  font-size: clamp(1rem, 3vw, 2rem) !important;
-  line-height: 1.5;
+  font-size: clamp(0.8rem, 2.5vw, 1.5rem) !important;
 }
 
 html.theme-thigasfal .marquee-track span {
-  font-size: clamp(0.8rem, 2vw, 1.2rem) !important;
+  font-size: clamp(0.6rem, 1.5vw, 1rem) !important;
 }
