@@ -130,4 +130,8 @@ export function applyTheme(themeId: string) {
   for (const [key, value] of Object.entries(theme.colors)) {
     root.style.setProperty(`--theme-${key}`, value);
   }
+
+  // Remove previous theme classes and add the current one
+  root.className = root.className.replace(/\btheme-[a-zA-Z0-9-]+\b/g, '').trim();
+  root.classList.add(`theme-${themeId}`);
 }

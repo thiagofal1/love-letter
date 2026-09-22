@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @import 'tailwindcss';
 
@@ -20,9 +21,9 @@
   --color-border: var(--theme-border, #2a2318);
   --color-ring: var(--theme-ring, #c9a07a);
   --radius: 2px;
-  --font-display: 'Fraunces', serif;
-  --font-body: 'Lora', serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-display: var(--theme-font-display, 'Fraunces', serif);
+  --font-body: var(--theme-font-body, 'Lora', serif);
+  --font-mono: var(--theme-font-mono, 'DM Mono', monospace);
 }
 
 :root {
@@ -211,4 +212,69 @@ body {
 .photo-card {
   width: min(72vw, 290px);
   scroll-snap-align: center;
+}
+
+/* =========================================
+   THIGASFAL PROMO THEME
+   ========================================= */
+
+html.theme-thigasfal {
+  --theme-font-display: 'Press Start 2P', monospace;
+  --theme-font-body: 'Rajdhani', sans-serif;
+  --theme-font-mono: 'JetBrains Mono', monospace;
+}
+
+html.theme-thigasfal body {
+  background-image:
+    linear-gradient(rgba(211, 175, 55, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(211, 175, 55, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: flicker 4s infinite;
+}
+
+html.theme-thigasfal .grain-overlay {
+  display: none; /* Substitui grain por scanlines */
+}
+
+html.theme-thigasfal::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.15) 2px,
+    rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.85; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+
+/* Ajustes de layout para a fonte Press Start 2P (muito larga) */
+html.theme-thigasfal .counter-digit {
+  font-size: clamp(2.5rem, 8vw, 6rem) !important;
+}
+
+html.theme-thigasfal h1 span.gradient-text {
+  font-size: clamp(1.2rem, 4vw, 3rem) !important;
+  line-height: 1.5;
+}
+
+html.theme-thigasfal h2 {
+  font-size: clamp(1rem, 3vw, 2rem) !important;
+  line-height: 1.5;
+}
+
+html.theme-thigasfal .marquee-track span {
+  font-size: clamp(0.8rem, 2vw, 1.2rem) !important;
 }
