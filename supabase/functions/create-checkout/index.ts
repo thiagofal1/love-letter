@@ -58,7 +58,6 @@ serve(async (req) => {
           currency_id: "BRL",
         },
         back_url: returnUrl || "https://love.thigasfal.dev",
-        status: "pending",
       }),
     });
 
@@ -66,7 +65,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error("Mercado Pago Error:", data);
-      throw new Error("Failed to create subscription");
+      throw new Error(`Mercado Pago: ${data.message || data.error || 'Falha ao criar assinatura'}`);
     }
 
     // Store pending subscription in Supabase using Service Role to bypass RLS

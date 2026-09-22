@@ -96,7 +96,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
       if (isSupabaseConfigured && supabase) {
         if (!user) {
           setIsAuthOpen(true);
-          setPublishNotice({ type: 'error', text: 'Faça login para salvar a carta no Supabase.' });
+          setPublishNotice({ type: 'error', text: 'Faça login para salvar a carta.' });
           setIsSaving(false);
           return;
         }
@@ -107,7 +107,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
           .upsert(dataToSave, { onConflict: 'slug' });
         if (error) throw error;
         setShareUrl(`${window.location.origin}/?l=${slug}`);
-        setPublishNotice({ type: 'success', text: 'Carta salva no Supabase. Seu link está pronto.' });
+        setPublishNotice({ type: 'success', text: 'Carta salva. Seu link está pronto.' });
       } else {
         const encoded = btoa(encodeURIComponent(JSON.stringify(formData)));
         setShareUrl(`${window.location.origin}/?d=${encoded}`);
@@ -160,8 +160,9 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
              throw new Error(data.error || 'Erro ao gerar checkout');
         }
     } catch (err) {
-        console.error(err);
-        setPublishNotice({ type: 'error', text: 'Erro ao conectar com Mercado Pago.' });
+        console.error("Checkout Error:", err);
+        const msg = err instanceof Error ? err.message : 'Erro desconhecido ao conectar.';
+        setPublishNotice({ type: 'error', text: `Erro: ${msg}` });
         setIsCheckoutLoading(false);
     }
   }
