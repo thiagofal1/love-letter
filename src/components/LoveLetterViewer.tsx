@@ -73,6 +73,43 @@ function buildSpotifyEmbedUrl(playlistUrl?: string): string | null {
   return `https://open.spotify.com/embed/${uri.replace('spotify:', '').replace(':', '/')}`;
 }
 
+const CLASSIC_RED_EMOJIS = ['💝', '❤️🩹', '💌', '💕', '❤️🩹', '💝', '✨'];
+
+function FloatingEmojis() {
+  const [items, setItems] = useState<Array<{ id: number; emoji: string; left: string; delay: string; duration: string; size: string }>>([]);
+
+  useEffect(() => {
+    const generated = Array.from({ length: 25 }).map((_, i) => ({
+      id: i,
+      emoji: CLASSIC_RED_EMOJIS[Math.floor(Math.random() * CLASSIC_RED_EMOJIS.length)],
+      left: `${Math.random() * 100}vw`,
+      delay: `${Math.random() * 20}s`,
+      duration: `${15 + Math.random() * 15}s`,
+      size: `${1.5 + Math.random() * 1.5}rem`
+    }));
+    setItems(generated);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+      {items.map((item) => (
+        <span
+          key={item.id}
+          className="absolute -bottom-20 animate-floating-emoji"
+          style={{
+            left: item.left,
+            fontSize: item.size,
+            animationDelay: item.delay,
+            animationDuration: item.duration,
+          }}
+        >
+          {item.emoji}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 interface LoveLetterViewerProps {
   data?: LoveLetterData;
 }
@@ -107,6 +144,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
   return (
     <div className="relative min-h-screen bg-background text-foreground">
       <div className="grain-overlay" />
+      {letter.theme_id === 'classic-red' && <FloatingEmojis />}
 
       {/* Hero */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">

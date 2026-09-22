@@ -94,6 +94,23 @@ body {
   100% { background-position: 200% center; }
 }
 
+@keyframes float-up-fade {
+  0% {
+    transform: translateY(0) rotate(-15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.65;
+  }
+  75% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateY(-120vh) rotate(20deg);
+    opacity: 0;
+  }
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -104,6 +121,10 @@ body {
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+.animate-floating-emoji {
+  animation: float-up-fade linear infinite;
 }
 
 .delay-100 { animation-delay: 0.1s; }
