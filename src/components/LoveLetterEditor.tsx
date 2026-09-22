@@ -117,6 +117,40 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function handlePremiumCheckout() {
+    if (!user) {
+        setIsAuthOpen(true);
+        return;
+    }
+
+    try {
+        setPublishNotice({ type: 'success', text: 'Gerando checkout do Mercado Pago...' });
+        const { data: { session } } = await supabase!.auth.getSession();
+        
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({
+                returnUrl: window.location.href
+            })
+        });
+
+        const data = await res.json();
+        
+        if (data.init_point) {
+            window.location.href = data.init_point;
+        } else {
+             throw new Error(data.error || 'Erro ao gerar checkout');
+        }
+    } catch (err) {
+        console.error(err);
+        setPublishNotice({ type: 'error', text: 'Erro ao conectar com Mercado Pago.' });
+    }
+  }
+
   const tabs = [
     { id: 'geral' as const, label: 'Geral', icon: Calendar },
     { id: 'mensagens' as const, label: 'Mensagens', icon: Heart },
@@ -433,6 +467,22 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                       </div>
                     )}
                   </div>
+                  {/* CTA Premium (se não for premium) */}
+                  {!formData.is_premium && (
+                      <div className="pt-6 border-t border-border text-center">
+                          <h3 className="text-lg font-display text-primary mb-2">Seja Premium</h3>
+                          <p className="text-xs text-muted-foreground mb-4">
+                              Desbloqueie temas exclusivos, link personalizado e remova a marca d'água por apenas <strong className="text-foreground">R$ 3,99/mês</strong>.
+                          </p>
+                          <button
+                            onClick={handlePremiumCheckout}
+                            className="w-full py-3 bg-primary text-primary-foreground font-bold rounded flex items-center justify-center gap-2 hover:bg-accent transition-colors shadow-[0_0_15px_rgba(201,160,122,0.3)]"
+                          >
+                              <Crown className="w-5 h-5" />
+                              Fazer Upgrade Agora
+                          </button>
+                      </div>
+                  )}
                 </div>
               )}
             </div>
