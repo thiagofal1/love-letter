@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { AuthDialog } from './AuthDialog';
 import {
   Heart, Save, Eye, Sparkles, Music,
-  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus, UserCircle, LogOut
+  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus, UserCircle, LogOut, LayoutDashboard
 } from 'lucide-react';
 
 function generateSlug(partner: string, author: string) {
@@ -18,9 +18,10 @@ function generateSlug(partner: string, author: string) {
 
 interface LoveLetterEditorProps {
   initialData?: LoveLetterData;
+  onNavigate?: (view: string, slug?: string) => void;
 }
 
-export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLetterEditorProps) {
+export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate }: LoveLetterEditorProps) {
   const [formData, setFormData] = useState<LoveLetterData>(initialData);
   const [activeTab, setActiveTab] = useState<'geral' | 'mensagens' | 'memorias' | 'fotos' | 'musica'>('geral');
   const [viewMode, setViewMode] = useState<'split' | 'preview'>('split');
@@ -133,6 +134,16 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER }: LoveLett
         </div>
 
         <div className="flex items-center gap-3">
+          {user && onNavigate && (
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className="px-3 py-1.5 text-xs font-mono flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              Minhas Cartas
+            </button>
+          )}
+
           {user ? (
             <button
               onClick={signOut}

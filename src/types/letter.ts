@@ -24,6 +24,7 @@ export interface LoveLetterData {
   photos?: string[];
   theme_id?: string;
   is_premium?: boolean;
+  created_at?: string;
 }
 
 export const DEFAULT_LOVE_LETTER: LoveLetterData = {

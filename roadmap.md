@@ -109,9 +109,9 @@ love-letter/
 - [x] Adicionar componente de upload de fotos no Studio Editor, com validação de formato/tamanho e feedback de erro.
 - [x] Exibir galeria de fotos do casal no `LoveLetterViewer` com carrossel horizontal e lightbox acessível.
 
-### 🔐 Fase 6 — Autenticação & Dashboard do Criador (Em Andamento)
+### ✅ Fase 6 — Autenticação & Dashboard do Criador (Concluído)
 - [x] Tela de Login / Cadastro (Supabase Auth por E-mail ou Google).
-- [ ] Dashboard `/dashboard` para listar, editar ou excluir cartas criadas pelo usuário.
+- [x] Dashboard `/?view=dashboard` para listar, editar ou excluir cartas criadas pelo usuário.
 
 ### 💎 Fase 7 — Monetização & Plano Premium
 - [ ] Lógica para remoção da marca d'água no rodapé.

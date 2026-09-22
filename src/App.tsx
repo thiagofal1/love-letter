@@ -3,21 +3,57 @@ import type { LoveLetterData } from './types/letter';
 import { DEFAULT_LOVE_LETTER } from './types/letter';
 import { LoveLetterViewer } from './components/LoveLetterViewer';
 import { LoveLetterEditor } from './components/LoveLetterEditor';
+import { Dashboard } from './components/Dashboard';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 
+type AppView = 'editor' | 'viewer' | 'dashboard';
+
 export default function App() {
+  const [currentView, setCurrentView] = useState<AppView>('editor');
   const [letterData, setLetterData] = useState<LoveLetterData | null>(null);
+  const [editorData, setEditorData] = useState<LoveLetterData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
     const slug = params.get('l');
+    const editSlug = params.get('edit');
     const encodedData = params.get('d');
 
-    async function loadLetter() {
+    async function loadRoute() {
+      // Rota: Dashboard
+      if (view === 'dashboard') {
+        setCurrentView('dashboard');
+        setLoading(false);
+        return;
+      }
+
+      // Rota: Editar carta existente
+      if (editSlug && isSupabaseConfigured && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('letters')
+            .select('*')
+            .eq('slug', editSlug)
+            .single();
+
+          if (data && !error) {
+            setEditorData(data as LoveLetterData);
+            setCurrentView('editor');
+            setLoading(false);
+            return;
+          }
+        } catch {
+          console.error('Falha ao carregar carta para edição.');
+        }
+      }
+
+      // Rota: Viewer via base64
       if (encodedData) {
         try {
           setLetterData(JSON.parse(decodeURIComponent(atob(encodedData))));
+          setCurrentView('viewer');
           setLoading(false);
           return;
         } catch {
@@ -25,6 +61,7 @@ export default function App() {
         }
       }
 
+      // Rota: Viewer via slug
       if (slug && isSupabaseConfigured && supabase) {
         try {
           const { data, error } = await supabase
@@ -35,6 +72,7 @@ export default function App() {
 
           if (data && !error) {
             setLetterData(data as LoveLetterData);
+            setCurrentView('viewer');
             setLoading(false);
             return;
           }
@@ -43,11 +81,30 @@ export default function App() {
         }
       }
 
+      // Rota padrão: Editor
+      setCurrentView('editor');
       setLoading(false);
     }
 
-    loadLetter();
+    loadRoute();
   }, []);
+
+  function handleNavigate(view: string, slug?: string) {
+    if (view === 'dashboard') {
+      window.history.pushState({}, '', '/?view=dashboard');
+      setCurrentView('dashboard');
+      setEditorData(null);
+    } else if (view === 'edit' && slug) {
+      window.history.pushState({}, '', `/?edit=${slug}`);
+      // Recarregar a página para buscar os dados da carta
+      window.location.href = `/?edit=${slug}`;
+    } else {
+      // Editor vazio (nova carta)
+      window.history.pushState({}, '', '/');
+      setEditorData(null);
+      setCurrentView('editor');
+    }
+  }
 
   if (loading) {
     return (
@@ -57,9 +114,18 @@ export default function App() {
     );
   }
 
-  if (letterData) {
+  if (currentView === 'dashboard') {
+    return <Dashboard onNavigate={handleNavigate} />;
+  }
+
+  if (currentView === 'viewer' && letterData) {
     return <LoveLetterViewer data={letterData} />;
   }
 
-  return <LoveLetterEditor initialData={DEFAULT_LOVE_LETTER} />;
+  return (
+    <LoveLetterEditor
+      initialData={editorData || DEFAULT_LOVE_LETTER}
+      onNavigate={handleNavigate}
+    />
+  );
 }
