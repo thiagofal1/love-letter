@@ -102,10 +102,18 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
         }
 
         const dataToSave = { ...formData, slug, user_id: user.id };
+        if (!dataToSave.id) delete dataToSave.id;
+
         const { error } = await supabase
           .from('letters')
-          .upsert(dataToSave, { onConflict: 'slug' });
-        if (error) throw error;
+          .upsert(dataToSave);
+        
+        if (error) {
+          if (error.code === '23505') { // Postgres unique_violation
+             throw new Error('Este Link Personalizado já está em uso. Por favor, escolha outro link na aba Premium.');
+          }
+          throw error;
+        }
         setPublishNotice({ type: 'success', text: 'Sua carta de amor foi publicada com sucesso!' });
         setShareUrl(`${window.location.origin}/?l=${slug}`);
       } else {

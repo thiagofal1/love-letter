@@ -130,7 +130,13 @@ love-letter/
 - [x] Cookies | Criar banner com aceitar, recusar e preferencias; bloquear analytics antes da permissao.
 - [x] ERROR 404 | Criar pagina personalizada de erro 404.
 
-### 🔒 Fase 9 - Seguranca
+### 📱 Fase 9 - Responsividade e UX Mobile
+- [ ] Ajustar Layout do Editor | Garantir que o painel lateral e a tela de preview (split screen) funcionem bem em telas pequenas sem esmagar o conteúdo.
+- [ ] Navegação de Abas | Fazer as abas de edição deslizarem horizontalmente no celular.
+- [ ] Modal Premium | Verificar se o modal cabe perfeitamente na tela de um smartphone.
+- [ ] Visualizador da Carta | Revisar tamanho das fontes (especialmente a Press Start 2P) e espaçamentos no mobile.
+
+### 🔒 Fase 10 - Seguranca
 - [ ] Configuracoes de seguranca | Aplicar CSP gradual, HSTS apos HTTPS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy e antispam/rate limit no endpoint. Revisar segredos e restaurar `.env.example` sem credenciais.
 ---
 
