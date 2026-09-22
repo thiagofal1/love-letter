@@ -113,11 +113,11 @@ love-letter/
 - [x] Tela de Login / Cadastro (Supabase Auth por E-mail ou Google).
 - [x] Dashboard `/?view=dashboard` para listar, editar ou excluir cartas criadas pelo usuário.
 
-### 💎 Fase 7 — Monetização & Plano Premium
-- [ ] Lógica para remoção da marca d'água no rodapé.
-- [ ] Slugs personalizados (ex: `loveletter.app/izzy-e-thiago`).
-- [ ] Temas de cores adicionais (*Classic Red*, *Pastel Rose*, *Dark Velvet*).
-- [ ] Integração com gateway de pagamento (Stripe / Abmex / Asaas).
+### 💎 Fase 7 — Monetização & Plano Premium (Em Andamento)
+- [x] Lógica para remoção da marca d'água no rodapé.
+- [x] Slugs personalizados (ex: `loveletter.app/izzy-e-thiago`).
+- [x] Temas de cores adicionais (*Classic Red*, *Pastel Rose*, *Dark Velvet*).
+- [ ] Integração com gateway de pagamento (Mercado Pago).
 
 ---
 

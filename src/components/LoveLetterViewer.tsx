@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { LoveLetterData } from '../types/letter';
 import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { parseSpotifyUri } from '../spotify';
+import { applyTheme } from '../lib/themes';
 
 function useLiveCounter(startDateStr: string) {
   const [elapsed, setElapsed] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -82,6 +83,10 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
   const [activeMemory, setActiveMemory] = useState<number | null>(null);
   const [activePhoto, setActivePhoto] = useState<number | null>(null);
   const photos = letter.photos || [];
+
+  useEffect(() => {
+    applyTheme(letter.theme_id || 'warm-gold');
+  }, [letter.theme_id]);
 
   useEffect(() => {
     if (activePhoto === null) return;
@@ -289,11 +294,11 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
                     <div
                       className="relative z-10 shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-1 transition-all duration-300"
                       style={{
-                        background: activeMemory === i ? '#c9a07a' : '#16120e',
-                        border: `1px solid ${activeMemory === i ? '#c9a07a' : '#2a2318'}`,
+                        background: activeMemory === i ? 'var(--color-primary)' : 'var(--color-card)',
+                        border: `1px solid ${activeMemory === i ? 'var(--color-primary)' : 'var(--color-border)'}`,
                       }}
                     >
-                      <div className="w-2 h-2 rounded-full" style={{ background: activeMemory === i ? '#0d0a08' : '#c9a07a' }} />
+                      <div className="w-2 h-2 rounded-full" style={{ background: activeMemory === i ? 'var(--color-background)' : 'var(--color-primary)' }} />
                     </div>
 
                     <div className="flex flex-col gap-1 pt-1.5 flex-1">
@@ -302,7 +307,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
                       </span>
                       <h3
                         className="font-display italic transition-colors duration-300"
-                        style={{ fontSize: '1.35rem', fontWeight: 400, color: activeMemory === i ? '#c9a07a' : '#f0ebe3' }}
+                        style={{ fontSize: '1.35rem', fontWeight: 400, color: activeMemory === i ? 'var(--color-primary)' : 'var(--color-foreground)' }}
                       >
                         {memory.label}
                       </h3>

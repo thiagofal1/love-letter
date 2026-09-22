@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { LoveLetterData, MemoryItem } from '../types/letter';
 import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { LoveLetterViewer } from './LoveLetterViewer';
@@ -6,9 +6,10 @@ import { PhotoUploader } from './PhotoUploader';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthDialog } from './AuthDialog';
+import { THEMES, applyTheme } from '../lib/themes';
 import {
   Heart, Save, Eye, Sparkles, Music,
-  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus, UserCircle, LogOut, LayoutDashboard
+  Calendar, Plus, Trash2, Link, Check, ExternalLink, ImagePlus, UserCircle, LogOut, LayoutDashboard, Crown, Lock
 } from 'lucide-react';
 
 function generateSlug(partner: string, author: string) {
@@ -23,8 +24,12 @@ interface LoveLetterEditorProps {
 
 export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate }: LoveLetterEditorProps) {
   const [formData, setFormData] = useState<LoveLetterData>(initialData);
-  const [activeTab, setActiveTab] = useState<'geral' | 'mensagens' | 'memorias' | 'fotos' | 'musica'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'mensagens' | 'memorias' | 'fotos' | 'musica' | 'premium'>('geral');
   const [viewMode, setViewMode] = useState<'split' | 'preview'>('split');
+
+  useEffect(() => {
+    applyTheme(formData.theme_id || 'warm-gold');
+  }, [formData.theme_id]);
   const [isSaving, setIsSaving] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -118,6 +123,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     { id: 'memorias' as const, label: 'Timeline', icon: Sparkles },
     { id: 'fotos' as const, label: 'Fotos', icon: ImagePlus },
     { id: 'musica' as const, label: 'Música & Fim', icon: Music },
+    { id: 'premium' as const, label: 'Premium', icon: Crown },
   ];
 
   return (
@@ -301,6 +307,133 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                   photos={formData.photos || []}
                   onChange={(photos) => updateField('photos', photos)}
                 />
+              )}
+
+              {activeTab === 'premium' && (
+                <div className="space-y-8">
+                  {/* Seletor de Temas */}
+                  <div className="space-y-4">
+                    <label className="block text-xs font-mono text-muted-foreground uppercase">Tema de Cores</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {THEMES.map((theme) => {
+                        const isSelected = (formData.theme_id || 'warm-gold') === theme.id;
+                        const isLocked = theme.premium && !formData.is_premium;
+
+                        return (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => {
+                              updateField('theme_id', theme.id);
+                            }}
+                            className={`relative p-3 rounded border text-left transition-all ${
+                              isSelected
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border bg-background hover:border-muted-foreground'
+                            }`}
+                          >
+                            {/* Palette Preview */}
+                            <div className="flex gap-1.5 mb-2">
+                              {['background', 'primary', 'card', 'accent'].map((colorKey) => (
+                                <div
+                                  key={colorKey}
+                                  className="w-5 h-5 rounded-full border border-border"
+                                  style={{ backgroundColor: theme.colors[colorKey] }}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs font-mono text-foreground">{theme.name}</span>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{theme.description}</p>
+
+                            {/* Premium Badge */}
+                            {theme.premium && (
+                              <span className="absolute top-2 right-2 flex items-center gap-1">
+                                {isLocked && <Lock className="w-3 h-3 text-muted-foreground" />}
+                                <span className="text-[9px] font-mono text-primary uppercase">Premium</span>
+                              </span>
+                            )}
+
+                            {/* Selected Check */}
+                            {isSelected && (
+                              <div className="absolute bottom-2 right-2">
+                                <Check className="w-3.5 h-3.5 text-primary" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Separador */}
+                  <div className="h-px bg-border" />
+
+                  {/* Slug Personalizado */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-mono text-muted-foreground uppercase">Link Personalizado</label>
+                    {formData.is_premium ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-0 rounded border border-border overflow-hidden">
+                          <span className="px-3 py-2 bg-secondary text-[11px] font-mono text-muted-foreground whitespace-nowrap border-r border-border">
+                            loveletter.app/
+                          </span>
+                          <input
+                            type="text"
+                            value={formData.slug || ''}
+                            onChange={(e) => {
+                              const sanitized = e.target.value
+                                .toLowerCase()
+                                .replace(/\s+/g, '-')
+                                .replace(/[^a-z0-9\-]/g, '');
+                              updateField('slug', sanitized);
+                            }}
+                            className="flex-1 bg-background px-3 py-2 text-sm focus:outline-none text-foreground font-mono"
+                            placeholder="izzy-e-thiago"
+                          />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          Use letras, números e hífens. Ex: izzy-e-thiago
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded border border-dashed border-border text-center">
+                        <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground">
+                          Disponível no plano Premium
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Customize o link da sua carta com um slug exclusivo.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Marca d'água */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-mono text-muted-foreground uppercase">Marca d'água</label>
+                    {formData.is_premium ? (
+                      <div className="p-3 rounded border border-primary/30 bg-primary/5">
+                        <div className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-primary" />
+                          <span className="text-xs text-primary font-mono">Marca d'água removida</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Sua carta não exibe "Criado com Love Letter" no rodapé.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded border border-dashed border-border text-center">
+                        <Lock className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground">
+                          Disponível no plano Premium
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Remova o "Criado com Love Letter" do rodapé da sua carta.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </aside>
