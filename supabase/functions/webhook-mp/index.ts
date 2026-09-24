@@ -3,28 +3,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req) => {
   try {
+    if (req.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
     const url = new URL(req.url);
-    const action = url.searchParams.get("data.id") || req.body?.data?.id; // Depending on MP webhook format
-
-    // Parse body if it exists
-    let bodyText = "";
+    let payload: { type?: string; data?: { id?: string } } = {};
     try {
-      bodyText = await req.text();
-    } catch (e) {
-      // Ignore
+      payload = await req.json();
+    } catch {
+      // Mercado Pago may send the event data only in the query string.
     }
 
-    let payload = {};
-    if (bodyText) {
-      try {
-        payload = JSON.parse(bodyText);
-      } catch (e) {
-        // Ignore
-      }
-    }
-
-    const type = payload.type || url.searchParams.get("type");
-    const id = payload.data?.id || url.searchParams.get("data.id");
+    const type = payload.type ?? url.searchParams.get("type");
+    const id = payload.data?.id ?? url.searchParams.get("data.id");
 
     if (type !== "subscription_preapproval") {
         return new Response("Not a subscription event", { status: 200 });
@@ -67,7 +59,7 @@ serve(async (req) => {
     );
 
     // Update subscription status
-    await supabaseAdmin.from("subscriptions").upsert(
+    const { error: subscriptionError } = await supabaseAdmin.from("subscriptions").upsert(
       {
         user_id: userId,
         mp_preapproval_id: id,
@@ -76,28 +68,43 @@ serve(async (req) => {
       },
       { onConflict: "user_id" }
     );
+    if (subscriptionError) {
+      throw new Error(`Failed to update subscription: ${subscriptionError.message}`);
+    }
 
     // If authorized, mark all user letters as premium and update user metadata
     if (status === "authorized") {
-       await supabaseAdmin
+       const { error: lettersError } = await supabaseAdmin
         .from("letters")
         .update({ is_premium: true })
         .eq("user_id", userId);
+       if (lettersError) {
+         throw new Error(`Failed to update letters: ${lettersError.message}`);
+       }
 
        // Optional: Update user auth metadata
-       await supabaseAdmin.auth.admin.updateUserById(userId, {
+       const { error: userError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
             user_metadata: { is_premium: true }
        });
+       if (userError) {
+         throw new Error(`Failed to update user: ${userError.message}`);
+       }
     } else {
         // If cancelled or paused, revert premium status
-        await supabaseAdmin
+        const { error: lettersError } = await supabaseAdmin
         .from("letters")
         .update({ is_premium: false })
         .eq("user_id", userId);
+        if (lettersError) {
+          throw new Error(`Failed to update letters: ${lettersError.message}`);
+        }
         
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
+        const { error: userError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
             user_metadata: { is_premium: false }
        });
+        if (userError) {
+          throw new Error(`Failed to update user: ${userError.message}`);
+        }
     }
 
     return new Response("Webhook processed", { status: 200 });
