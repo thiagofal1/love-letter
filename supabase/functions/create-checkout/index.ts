@@ -33,6 +33,13 @@ serve(async (req) => {
       });
     }
 
+    if (!user.email) {
+      return new Response(JSON.stringify({ error: "A conta precisa ter um e-mail para iniciar a assinatura." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
     const { returnUrl } = await req.json();
 
     const mpAccessToken = Deno.env.get("MP_ACCESS_TOKEN");
@@ -50,6 +57,7 @@ serve(async (req) => {
       body: JSON.stringify({
         reason: "Love Letter Premium",
         external_reference: user.id,
+        payer_email: user.email,
         auto_recurring: {
           frequency: 1,
           frequency_type: "months",
