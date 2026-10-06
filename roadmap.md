@@ -136,8 +136,8 @@ love-letter/
 - [x] Modal Premium | Verificar se o modal cabe perfeitamente na tela de um smartphone.
 - [x] Visualizador da Carta | Revisar tamanho das fontes (especialmente a Press Start 2P) e espaçamentos no mobile.
 
-### 🔒 Fase 10 - Seguranca
-- [ ] Configuracoes de seguranca | Aplicar CSP gradual, HSTS apos HTTPS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy e antispam/rate limit no endpoint. Revisar segredos e restaurar `.env.example` sem credenciais.
+### ✅ Fase 10 - Segurança (Concluído)
+- [x] Configuracoes de seguranca | Aplicar CSP gradual, HSTS apos HTTPS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy e antispam/rate limit no endpoint. Revisar segredos e restaurar `.env.example` sem credenciais.
 ---
 
 ## 🎯 Princípios do Projeto

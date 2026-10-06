@@ -90,6 +90,14 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     setShareUrl(null);
     setPublishNotice(null);
 
+    // Rate Limiting Básico (Frontend)
+    const lastPublish = localStorage.getItem('last_publish_time');
+    if (lastPublish && Date.now() - parseInt(lastPublish, 10) < 60000) {
+      setPublishNotice({ type: 'error', text: 'Você está publicando rápido demais. Aguarde 1 minuto.' });
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const slug = formData.slug || generateSlug(formData.partner_name, formData.author_name);
 
@@ -116,10 +124,12 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
         }
         setPublishNotice({ type: 'success', text: 'Sua carta de amor foi publicada com sucesso!' });
         setShareUrl(`${window.location.origin}/?l=${slug}`);
+        localStorage.setItem('last_publish_time', Date.now().toString());
       } else {
         const encoded = btoa(encodeURIComponent(JSON.stringify(formData)));
         setShareUrl(`${window.location.origin}/?d=${encoded}`);
         setPublishNotice({ type: 'success', text: 'Carta salva no link local. Configure o Supabase para persistência.' });
+        localStorage.setItem('last_publish_time', Date.now().toString());
       }
     } catch (err: any) {
       console.error('Publish error:', err);
