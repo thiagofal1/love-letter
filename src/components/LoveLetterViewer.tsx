@@ -79,21 +79,23 @@ function FloatingEmojis() {
   const [items, setItems] = useState<Array<{ id: number; emoji: string; left: string; delay: string; duration: string; size: string }>>([]);
 
   useEffect(() => {
+    const getRandom = () => crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
+    
     const generated = Array.from({ length: 25 }).map((_, i) => {
       // 50% chance of being on the left side (5vw to 25vw)
       // 50% chance of being on the right side (75vw to 95vw)
-      const isLeft = Math.random() > 0.5;
+      const isLeft = getRandom() > 0.5;
       const leftPos = isLeft 
-        ? 5 + Math.random() * 20 
-        : 75 + Math.random() * 20;
+        ? 5 + getRandom() * 20 
+        : 75 + getRandom() * 20;
 
       return {
         id: i,
-        emoji: CLASSIC_RED_EMOJIS[Math.floor(Math.random() * CLASSIC_RED_EMOJIS.length)],
+        emoji: CLASSIC_RED_EMOJIS[Math.floor(getRandom() * CLASSIC_RED_EMOJIS.length)],
         left: `${leftPos}vw`,
-        delay: `${Math.random() * 20}s`,
-        duration: `${15 + Math.random() * 15}s`,
-        size: `${1.5 + Math.random() * 1.5}rem`
+        delay: `${getRandom() * 20}s`,
+        duration: `${15 + getRandom() * 15}s`,
+        size: `${1.5 + getRandom() * 1.5}rem`
       };
     });
     setItems(generated);
@@ -393,8 +395,14 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
             <blockquote
               className="font-display italic text-foreground"
               style={{ fontSize: 'clamp(2rem, 6vw, 4rem)', fontWeight: 300, lineHeight: 1.25, letterSpacing: '-0.02em' }}
-              dangerouslySetInnerHTML={{ __html: letter.closing_quote.replace('\n', '<br />') }}
-            />
+            >
+              {letter.closing_quote.split('\n').map((line, i, arr) => (
+                <span key={i}>
+                  {line}
+                  {i < arr.length - 1 && <br />}
+                </span>
+              ))}
+            </blockquote>
           )}
 
           <div className="w-12 h-px mx-auto bg-primary opacity-50" />

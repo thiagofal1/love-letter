@@ -15,7 +15,8 @@ import {
 
 function generateSlug(partner: string, author: string) {
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return `${clean(partner)}-e-${clean(author)}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const randomVal = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1);
+  return `${clean(partner)}-e-${clean(author)}-${Math.floor(1000 + randomVal * 9000)}`;
 }
 
 interface LoveLetterEditorProps {

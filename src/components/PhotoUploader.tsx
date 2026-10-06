@@ -20,7 +20,7 @@ function extensionFor(file: File) {
 function uploadName(file: File) {
   const id = typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    : `${Date.now()}-${Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('')}`;
   return `uploads/${id}.${extensionFor(file)}`;
 }
 
