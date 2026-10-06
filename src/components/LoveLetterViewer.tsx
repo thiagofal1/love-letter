@@ -206,7 +206,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
       </section>
 
       {/* Contador */}
-      <section className="py-24 px-6 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-6 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'linear-gradient(to bottom, transparent, rgba(201,160,122,0.04) 50%, transparent)' }}
@@ -216,7 +216,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
             <div className="flex flex-col items-center gap-3">
               <span className="text-xs tracking-[0.3em] uppercase font-mono text-muted-foreground">Juntos há</span>
               <span
-                className="leading-none font-display text-primary"
+                className="days-counter leading-none font-display text-primary"
                 style={{ fontSize: 'clamp(5rem, 20vw, 14rem)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1 }}
               >
                 {counter.days}
@@ -224,7 +224,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
               <span className="text-sm tracking-[0.2em] uppercase font-mono text-muted-foreground">dias</span>
             </div>
 
-            <div className="flex gap-4 md:gap-16 items-start px-6 md:px-8 py-6 rounded-sm border border-border bg-card/60">
+            <div className="flex justify-center gap-3 md:gap-16 items-start px-4 md:px-8 py-6 rounded-sm border border-border bg-card/60 w-full md:w-auto">
               <CounterBlock value={counter.hours} label="horas" />
               <span className="text-border text-5xl font-display self-start mt-1">:</span>
               <CounterBlock value={counter.minutes} label="minutos" />
@@ -268,7 +268,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
 
       {/* Galeria */}
       {photos.length > 0 && (
-        <section className="py-24 px-6 overflow-hidden">
+        <section className="py-16 md:py-24 px-6 overflow-hidden">
           <RevealSection className="max-w-6xl mx-auto">
             <p className="text-xs tracking-[0.3em] uppercase mb-12 text-center font-mono text-muted-foreground">
               Nossos momentos favoritos
@@ -295,7 +295,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
 
       {/* Declarações */}
       {letter.declarations && letter.declarations.length > 0 && (
-        <section className="py-24 px-6">
+        <section className="py-16 md:py-24 px-6">
           <RevealSection className="max-w-3xl mx-auto flex flex-col gap-0">
             <p className="text-xs tracking-[0.3em] uppercase mb-16 text-center font-mono text-muted-foreground">
               Coisas que sinto e nunca canso de dizer
@@ -322,7 +322,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
 
       {/* Timeline de Memórias */}
       {letter.memories && letter.memories.length > 0 && (
-        <section className="py-24 px-6 relative">
+        <section className="py-16 md:py-24 px-6 relative">
           <div className="absolute inset-0 bg-background pointer-events-none" />
           <RevealSection className="max-w-2xl mx-auto relative z-10">
             <p className="text-xs tracking-[0.3em] uppercase mb-20 text-center font-mono text-muted-foreground">

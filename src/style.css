@@ -273,6 +273,10 @@ html.theme-thigasfal .counter-digit {
   font-size: clamp(1.2rem, 5vw, 3rem) !important;
 }
 
+html.theme-thigasfal .days-counter {
+  font-size: clamp(2.5rem, 8vw, 6rem) !important;
+}
+
 html.theme-thigasfal h1 span.gradient-text {
   font-size: clamp(1rem, 3.5vw, 2.2rem) !important;
   line-height: 1.4 !important;

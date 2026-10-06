@@ -285,16 +285,16 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
       {/* Editor + Preview */}
       <div className="flex-1 flex overflow-hidden">
         {viewMode === 'split' && (
-          <aside className="w-full md:w-[450px] lg:w-[500px] border-r border-border bg-card flex flex-col h-[calc(100vh-4rem)]">
+          <aside className="w-full md:w-[450px] lg:w-[500px] border-r border-border bg-card flex flex-col h-[calc(100vh-4rem)] shrink-0">
             {/* Abas */}
-            <div className="flex border-b border-border bg-background">
+            <div className="flex border-b border-border bg-background overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 py-3 text-xs font-mono flex items-center justify-center gap-1.5 border-b-2 transition-colors ${
+                    className={`flex-1 min-w-[90px] py-3 px-2 text-xs font-mono flex items-center justify-center gap-1.5 border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-primary text-primary bg-card'
                         : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -545,7 +545,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
           </aside>
         )}
 
-        <main className="flex-1 overflow-y-auto h-[calc(100vh-4rem)] bg-background">
+        <main className={`flex-1 overflow-y-auto h-[calc(100vh-4rem)] bg-background ${viewMode === 'split' ? 'hidden md:block' : ''}`}>
           <LoveLetterViewer data={formData} />
         </main>
       </div>

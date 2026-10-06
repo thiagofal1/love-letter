@@ -12,7 +12,7 @@ export function PremiumModal({ isOpen, onClose, onCheckout, isLoading }: Premium
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card border border-border w-full max-w-md rounded-lg p-6 relative shadow-2xl">
+      <div className="bg-card border border-border w-full max-w-md rounded-lg p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
