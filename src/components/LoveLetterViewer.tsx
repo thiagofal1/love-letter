@@ -70,7 +70,7 @@ function CounterBlock({ value, label }: { value: number; label: string }) {
 function buildSpotifyEmbedUrl(playlistUrl?: string): string | null {
   const uri = parseSpotifyUri(playlistUrl);
   if (!uri) return null;
-  return `https://open.spotify.com/embed/${uri.replace('spotify:', '').replace(':', '/')}`;
+  return `https://open.spotify.com/embed/${uri.replaceAll('spotify:', '').replaceAll(':', '/')}`;
 }
 
 const CLASSIC_RED_EMOJIS = ['💝', '❤️🩹', '💌', '💕', '❤️🩹', '💝', '✨'];
