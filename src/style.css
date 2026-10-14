@@ -67,6 +67,26 @@ button, a { touch-action: manipulation; }
   .section-reveal { opacity: 1; transform: none; }
 }
 
+/* Keep every Studio tab reachable inside the fixed editor sidebar. */
+.studio-sidebar .studio-tabs {
+  overflow-x: hidden;
+}
+
+.studio-sidebar .studio-tab {
+  min-width: 0;
+  flex-shrink: 1;
+  padding-inline: 0.25rem;
+  gap: 0.25rem;
+  font-size: 0.625rem;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-sidebar .studio-tab svg {
+  display: none;
+}
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(32px); }
   to   { opacity: 1; transform: translateY(0); }
