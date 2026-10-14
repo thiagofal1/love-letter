@@ -196,7 +196,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="studio-shell min-h-screen flex flex-col bg-background text-foreground">
       {isAuthOpen && <AuthDialog onClose={() => setIsAuthOpen(false)} />}
       <PremiumModal 
         isOpen={isPremiumModalOpen} 
@@ -206,15 +206,15 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
       />
       
       {/* Navbar */}
-      <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between z-50">
-        <div className="flex items-center gap-3">
+      <header className="studio-header h-16 border-b border-border bg-card px-6 flex items-center justify-between z-50">
+        <div className="studio-brand flex items-center gap-3">
           <Heart className="w-5 h-5 text-primary fill-primary" />
           <span className="font-semibold text-lg tracking-wider font-display text-primary">
             LOVE LETTER <span className="text-xs font-mono text-muted-foreground ml-1">Studio</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="studio-actions flex items-center gap-3">
           {user && onNavigate && (
             <button
               onClick={() => onNavigate('dashboard')}
@@ -294,7 +294,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
       )}
 
       {/* Editor + Preview */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="studio-editor-layout flex-1 flex overflow-hidden">
         {viewMode === 'split' && (
           <aside className="studio-sidebar w-full md:w-[450px] lg:w-[500px] border-r border-border bg-card flex flex-col h-[calc(100vh-4rem)] shrink-0">
             {/* Abas */}
