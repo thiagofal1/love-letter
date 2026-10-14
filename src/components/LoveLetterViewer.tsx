@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { LoveLetterData } from '../types/letter';
 import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { parseSpotifyUri } from '../spotify';
-import { applyTheme } from '../lib/themes';
+import { applyTheme, getTheme } from '../lib/themes';
 
 function useLiveCounter(startDateStr: string) {
   const [elapsed, setElapsed] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -127,6 +127,7 @@ interface LoveLetterViewerProps {
 
 export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewerProps) {
   const letter = { ...DEFAULT_LOVE_LETTER, ...data };
+  const theme = getTheme(letter.theme_id || 'warm-gold');
   const counter = useLiveCounter(letter.relationship_start_date);
   const [activeMemory, setActiveMemory] = useState<number | null>(null);
   const [activePhoto, setActivePhoto] = useState<number | null>(null);
@@ -153,15 +154,19 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
   const spotifyEmbedUrl = buildSpotifyEmbedUrl(letter.spotify_playlist_url);
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
+    <div
+      className="love-letter relative min-h-[100dvh] bg-background text-foreground"
+      data-theme-mode={theme.visualMode}
+      data-art-direction={theme.artDirection}
+    >
       <div className="grain-overlay" />
       {letter.theme_id === 'classic-red' && <FloatingEmojis />}
 
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+      <section className="theme-hero relative min-h-[100dvh] flex flex-col items-center justify-center px-6 overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 55%, rgba(201,160,122,0.08) 0%, transparent 70%)' }}
+          style={{ background: 'var(--theme-hero-wash)' }}
         />
         <div className="absolute inset-0 vignette" />
 
@@ -177,10 +182,10 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
           </p>
 
           <h1
-            className="animate-fade-in-up delay-300 leading-none font-display italic"
+            className="theme-display animate-fade-in-up delay-300 leading-none font-display"
             style={{ fontSize: 'clamp(3.5rem, 12vw, 9rem)', fontWeight: 300, letterSpacing: '-0.02em' }}
           >
-            <span className="gradient-text">{letter.hero_title}</span>
+            <span>{letter.hero_title}</span>
           </h1>
 
           {letter.hero_subtitle && (
@@ -200,18 +205,18 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
 
           <div className="animate-fade-in delay-1200 animate-float mt-4">
             <svg width="24" height="40" viewBox="0 0 24 40" fill="none" style={{ opacity: 0.4 }}>
-              <rect x="1" y="1" width="22" height="38" rx="11" stroke="#c9a07a" strokeWidth="1.5" />
-              <rect x="10.5" y="8" width="3" height="8" rx="1.5" fill="#c9a07a" />
+              <rect x="1" y="1" width="22" height="38" rx="11" stroke="var(--color-primary)" strokeWidth="1.5" />
+              <rect x="10.5" y="8" width="3" height="8" rx="1.5" fill="var(--color-primary)" />
             </svg>
           </div>
         </div>
       </section>
 
       {/* Contador */}
-      <section className="py-16 md:py-24 px-6 relative overflow-hidden">
+      <section className="theme-section py-16 md:py-24 px-6 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, transparent, rgba(201,160,122,0.04) 50%, transparent)' }}
+          style={{ background: 'var(--theme-counter-wash)' }}
         />
         <RevealSection className="max-w-4xl mx-auto">
           <div className="flex flex-col items-center gap-12">
@@ -226,7 +231,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
               <span className="text-sm tracking-[0.2em] uppercase font-mono text-muted-foreground">dias</span>
             </div>
 
-            <div className="flex justify-center gap-3 md:gap-16 items-start px-4 md:px-8 py-6 rounded-sm border border-border bg-card/60 w-full md:w-auto">
+            <div className="theme-panel flex justify-center gap-3 md:gap-16 items-start px-4 md:px-8 py-6 rounded-sm border border-border bg-card/60 w-full md:w-auto">
               <CounterBlock value={counter.hours} label="horas" />
               <span className="text-border text-5xl font-display self-start mt-1">:</span>
               <CounterBlock value={counter.minutes} label="minutos" />
@@ -283,7 +288,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
                   onClick={() => setActivePhoto(index)}
                   className="photo-card group relative aspect-[4/5] shrink-0 overflow-hidden rounded-sm border border-border bg-card text-left focus:outline-none focus:ring-1 focus:ring-primary"
                 >
-                  <img src={photo} alt={`Momento ${index + 1} de ${letter.author_name} e ${letter.partner_name}`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                  <img width="720" height="900" src={photo} alt={`Momento ${index + 1} de ${letter.author_name} e ${letter.partner_name}`} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/85 to-transparent px-4 pb-4 pt-12 font-mono text-[0.65rem] tracking-[0.2em] text-primary opacity-0 transition-opacity group-hover:opacity-100">
                     VER FOTO {String(index + 1).padStart(2, '0')}
                   </span>
@@ -336,13 +341,15 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
 
               <div className="flex flex-col">
                 {letter.memories.map((memory, i) => (
-                  <div
+                  <button
+                    type="button"
                     key={i}
-                    className="relative flex gap-8 pb-12 cursor-pointer group"
+                    className="relative flex w-full gap-8 pb-12 cursor-pointer group bg-transparent border-0 text-left"
                     onClick={() => setActiveMemory(activeMemory === i ? null : i)}
+                    aria-expanded={activeMemory === i}
                   >
                     <div
-                      className="relative z-10 shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-1 transition-all duration-300"
+                      className="relative z-10 shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-1 transition-colors duration-300"
                       style={{
                         background: activeMemory === i ? 'var(--color-primary)' : 'var(--color-card)',
                         border: `1px solid ${activeMemory === i ? 'var(--color-primary)' : 'var(--color-border)'}`,
@@ -370,7 +377,7 @@ export function LoveLetterViewer({ data = DEFAULT_LOVE_LETTER }: LoveLetterViewe
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

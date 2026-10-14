@@ -398,6 +398,9 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                           <button
                             key={theme.id}
                             type="button"
+                            aria-pressed={isSelected}
+                            data-theme-mode={theme.visualMode}
+                            data-art-direction={theme.artDirection}
                             onClick={(e) => {
                               if (theme.promotional) {
                                 const hasVisited = localStorage.getItem('has_visited_thigasfal');
@@ -413,14 +416,14 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                               }
                               updateField('theme_id', theme.id);
                             }}
-                            className={`relative p-3 rounded border text-left transition-all ${
+                            className={`theme-preview theme-preview--${theme.artDirection} relative p-3 rounded border text-left transition-[border-color,background-color,transform] ${
                               isSelected
                                 ? 'border-primary bg-primary/10'
                                 : 'border-border bg-background hover:border-muted-foreground'
                             }`}
                           >
-                            {/* Palette Preview */}
-                            <div className="flex gap-1.5 mb-2">
+                            {/* Visual preview */}
+                            <div className="theme-preview-art flex gap-1.5 mb-2" aria-hidden="true">
                               {['background', 'primary', 'card', 'accent'].map((colorKey) => (
                                 <div
                                   key={colorKey}
@@ -429,8 +432,9 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                                 />
                               ))}
                             </div>
-                            <span className="text-xs font-mono text-foreground">{theme.name}</span>
+                            <span className="text-xs font-semibold text-foreground">{theme.name}</span>
                             <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{theme.description}</p>
+                            <span className="mt-2 inline-block text-[10px] text-primary">{theme.artDirection}</span>
 
                             {/* Premium Badge */}
                             {theme.premium && (
