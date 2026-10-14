@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, Mail, Lock, Loader2 } from 'lucide-react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 export function AuthDialog({ onClose }: { onClose: () => void }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,8 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,19 +25,35 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
       return;
     }
 
+    if (!captchaToken) {
+      setError('Confirme o CAPTCHA antes de continuar.');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+          options: { captchaToken },
+        });
         if (error) throw error;
         onClose();
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { captchaToken },
+        });
         if (error) throw error;
         setSuccess('Cadastro realizado! Verifique seu email ou faça login se a confirmação estiver desativada.');
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao autenticar');
     } finally {
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
       setLoading(false);
     }
   }
@@ -119,6 +138,16 @@ export function AuthDialog({ onClose }: { onClose: () => void }) {
                 minLength={6}
               />
             </div>
+          </div>
+
+          <div className="flex justify-center">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={import.meta.env.VITE_HCAPTCHA_SITEKEY}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
+              onError={() => setCaptchaToken(null)}
+            />
           </div>
 
           {error && <div className="text-red-400 text-xs bg-red-950/30 p-2 rounded border border-red-900/50">{error}</div>}
