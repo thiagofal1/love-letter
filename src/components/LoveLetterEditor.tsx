@@ -47,10 +47,10 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
   const { user, signOut } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
-  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [checkoutLoadingMethod, setCheckoutLoadingMethod] = useState<'card' | 'pix' | null>(null);
 
   useEffect(() => {
-    if (!user || !supabase || formData.id) return;
+    if (!user || !supabase) return;
 
     const client = supabase;
     const userId = user.id;
@@ -58,7 +58,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     async function loadPremiumStatus() {
       const { data, error } = await client
         .from('subscriptions')
-        .select('status')
+        .select('status, payment_method, current_period_end')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -69,7 +69,10 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
       if (active) {
         setFormData((previous) => ({
           ...previous,
-          is_premium: data?.status === 'authorized',
+          is_premium:
+            data?.payment_method === 'pix'
+              ? Boolean(data.current_period_end && new Date(data.current_period_end).getTime() > Date.now())
+              : data?.status === 'authorized',
         }));
       }
     }
@@ -78,7 +81,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     return () => {
       active = false;
     };
-  }, [formData.id, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     const photos = formData.photos || [];
@@ -274,7 +277,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     setTimeout(() => setCopied(false), 2000);
   }
 
-  async function handlePremiumCheckout() {
+  async function handlePremiumCheckout(paymentMethod: 'card' | 'pix') {
     if (!user) {
         setIsPremiumModalOpen(false);
         setIsAuthOpen(true);
@@ -282,9 +285,17 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     }
 
     try {
-        setIsCheckoutLoading(true);
-        setPublishNotice({ type: 'success', text: 'Gerando checkout do Mercado Pago...' });
+        setCheckoutLoadingMethod(paymentMethod);
+        setPublishNotice({
+          type: 'success',
+          text: paymentMethod === 'pix'
+            ? 'Gerando pagamento Pix no Mercado Pago...'
+            : 'Gerando assinatura no Mercado Pago...',
+        });
         const { data: { session } } = await supabase!.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error('Sua sessão expirou. Entre novamente para continuar.');
+        }
         
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`, {
             method: 'POST',
@@ -292,12 +303,15 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session?.access_token}`
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({ paymentMethod })
         });
 
         const data = await res.json();
         
-        if (data.init_point) {
+        if (!res.ok) {
+          throw new Error(data.error || 'Não foi possível iniciar o pagamento.');
+        }
+        if (typeof data.init_point === 'string') {
             window.location.href = data.init_point;
         } else {
              throw new Error(data.error || 'Erro ao gerar checkout');
@@ -306,7 +320,8 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
         console.error("Checkout Error:", err);
         const msg = err instanceof Error ? err.message : 'Erro desconhecido ao conectar.';
         setPublishNotice({ type: 'error', text: `Erro: ${msg}` });
-        setIsCheckoutLoading(false);
+      setIsPremiumModalOpen(false);
+      setCheckoutLoadingMethod(null);
     }
   }
 
@@ -326,7 +341,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
         isOpen={isPremiumModalOpen} 
         onClose={() => setIsPremiumModalOpen(false)} 
         onCheckout={handlePremiumCheckout}
-        isLoading={isCheckoutLoading}
+        loadingMethod={checkoutLoadingMethod}
       />
       
       {/* Navbar */}
@@ -673,7 +688,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                               Desbloqueie temas exclusivos, link personalizado e remova a marca d'água por apenas <strong className="text-foreground">R$ 3,99/mês</strong>.
                           </p>
                           <button
-                            onClick={handlePremiumCheckout}
+                            onClick={() => setIsPremiumModalOpen(true)}
                             className="w-full py-3 bg-primary text-primary-foreground font-bold rounded flex items-center justify-center gap-2 hover:bg-accent transition-colors shadow-[0_0_15px_rgba(201,160,122,0.3)]"
                           >
                               <Crown className="w-5 h-5" />

@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const encoder = new TextEncoder();
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const resourceIdPattern = /^[a-z\d_-]{1,128}$/i;
+const premiumPrice = 3.99;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -23,7 +24,6 @@ function parseSignature(header: string | null) {
   if (!timestamp || !/^\d+$/.test(timestamp) || !signature || !/^[a-f\d]{64}$/i.test(signature)) {
     return null;
   }
-
   return { timestamp, signature };
 }
 
@@ -48,7 +48,7 @@ async function isValidSignature(
   const timestamp = Number(signature.timestamp);
   if (!Number.isSafeInteger(timestamp)) return false;
 
-  // Mercado Pago retries failed deliveries later; the handler always fetches the current resource state.
+  // Retries are safe because the handler fetches current resource state and processes payments idempotently.
   const manifest = `${dataId ? `id:${dataId.toLowerCase()};` : ""}request-id:${requestId};ts:${signature.timestamp};`;
   const key = await crypto.subtle.importKey(
     "raw",
@@ -60,6 +60,16 @@ async function isValidSignature(
   const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(manifest));
   const expected = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
   return constantTimeEqual(expected, signature.signature.toLowerCase());
+}
+
+async function fetchMercadoPagoResource(accessToken: string, path: string) {
+  const response = await fetch(`https://api.mercadopago.com${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Mercado Pago resource lookup failed with status ${response.status}`);
+  }
+  return await response.json();
 }
 
 serve(async (req) => {
@@ -110,18 +120,18 @@ serve(async (req) => {
     console.error("Could not validate Mercado Pago webhook signature:", error);
     return new Response("Could not validate webhook", { status: 500 });
   }
-
   if (!validSignature) {
     return new Response("Invalid webhook signature", { status: 401 });
   }
 
   const type = payload.type ?? url.searchParams.get("type");
-  if (type !== "subscription_preapproval") {
+  const isPreapprovalEvent = type === "subscription_preapproval";
+  const isAuthorizedPaymentEvent = type === "subscription_authorized_payment";
+  if (!isPreapprovalEvent && !isAuthorizedPaymentEvent) {
     return new Response("Event ignored", { status: 200 });
   }
-
   if (!dataId || !resourceIdPattern.test(dataId)) {
-    return new Response("Invalid subscription ID", { status: 400 });
+    return new Response("Invalid resource ID", { status: 400 });
   }
 
   try {
@@ -131,67 +141,125 @@ serve(async (req) => {
     if (!mpAccessToken || !supabaseUrl || !serviceRoleKey) {
       throw new Error("Missing Mercado Pago or Supabase service configuration");
     }
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
-    const response = await fetch(
-      `https://api.mercadopago.com/preapproval/${encodeURIComponent(dataId)}`,
-      { headers: { Authorization: `Bearer ${mpAccessToken}` } },
+    if (isPreapprovalEvent) {
+      const preapproval = await fetchMercadoPagoResource(
+        mpAccessToken,
+        `/preapproval/${encodeURIComponent(dataId)}`,
+      );
+      const userId = preapproval.external_reference;
+      const status = preapproval.status;
+      if (typeof userId !== "string" || !uuidPattern.test(userId)) {
+        throw new Error("Mercado Pago preapproval has an invalid external_reference");
+      }
+      if (!["authorized", "paused", "cancelled", "pending", "rejected"].includes(status)) {
+        throw new Error(`Unsupported Mercado Pago subscription status: ${String(status)}`);
+      }
+
+      const { data: currentSubscription, error: lookupError } = await supabaseAdmin
+        .from("subscriptions")
+        .select("mp_preapproval_id, payment_method, current_period_end")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (lookupError) {
+        throw new Error(`Failed to read subscription: ${lookupError.message}`);
+      }
+      if (currentSubscription?.mp_preapproval_id !== dataId) {
+        return new Response("Outdated subscription event ignored", { status: 200 });
+      }
+
+      const { error: subscriptionError } = await supabaseAdmin
+        .from("subscriptions")
+        .update({
+          mp_payer_email: preapproval.payer_email ?? null,
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+      if (subscriptionError) {
+        throw new Error(`Failed to update subscription: ${subscriptionError.message}`);
+      }
+
+      const pixAccessActive = currentSubscription.payment_method === "pix" &&
+        currentSubscription.current_period_end &&
+        new Date(currentSubscription.current_period_end).getTime() > Date.now();
+      const premiumActive = currentSubscription.payment_method === "card"
+        ? status === "authorized"
+        : Boolean(pixAccessActive);
+      const { error: lettersError } = await supabaseAdmin
+        .from("letters")
+        .update({
+          is_premium: premiumActive,
+          ...(premiumActive ? {} : { theme_id: "warm-gold" }),
+        })
+        .eq("user_id", userId);
+      if (lettersError) {
+        throw new Error(`Failed to update letter entitlements: ${lettersError.message}`);
+      }
+
+      return new Response("Subscription event processed", { status: 200 });
+    }
+
+    const authorizedPayment = await fetchMercadoPagoResource(
+      mpAccessToken,
+      `/authorized_payments/${encodeURIComponent(dataId)}`,
     );
-    if (!response.ok) {
-      throw new Error(`Mercado Pago preapproval lookup failed with status ${response.status}`);
+    const preapprovalId = authorizedPayment.preapproval_id;
+    if (typeof preapprovalId !== "string" || !resourceIdPattern.test(preapprovalId)) {
+      throw new Error("Authorized payment has an invalid preapproval ID");
     }
 
-    const preapproval = await response.json();
-    const userId = preapproval.external_reference;
-    const status = preapproval.status;
-    if (typeof userId !== "string" || !uuidPattern.test(userId)) {
-      throw new Error("Mercado Pago preapproval has an invalid external_reference");
-    }
-    if (!["authorized", "paused", "cancelled", "pending", "rejected"].includes(status)) {
-      throw new Error(`Unsupported Mercado Pago subscription status: ${String(status)}`);
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const { data: currentSubscription, error: lookupError } = await supabaseAdmin
+    const { data: subscription, error: subscriptionLookupError } = await supabaseAdmin
       .from("subscriptions")
-      .select("mp_preapproval_id")
-      .eq("user_id", userId)
+      .select("user_id, payment_method, mp_preapproval_id")
+      .eq("mp_preapproval_id", preapprovalId)
       .maybeSingle();
-    if (lookupError) {
-      throw new Error(`Failed to read subscription: ${lookupError.message}`);
+    if (subscriptionLookupError) {
+      throw new Error(`Failed to find subscription: ${subscriptionLookupError.message}`);
     }
-    if (
-      currentSubscription?.mp_preapproval_id &&
-      currentSubscription.mp_preapproval_id !== dataId
-    ) {
-      return new Response("Outdated subscription event ignored", { status: 200 });
+    if (!subscription || subscription.payment_method !== "pix") {
+      return new Response("Payment is not linked to a Pix subscription", { status: 200 });
     }
 
-    const { error: subscriptionError } = await supabaseAdmin.from("subscriptions").upsert(
-      {
-        user_id: userId,
-        mp_preapproval_id: dataId,
-        mp_payer_email: preapproval.payer_email ?? null,
-        status,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-    if (subscriptionError) {
-      throw new Error(`Failed to update subscription: ${subscriptionError.message}`);
+    const payment = isRecord(authorizedPayment.payment) ? authorizedPayment.payment : {};
+    if (authorizedPayment.status !== "processed" || payment.status !== "approved") {
+      return new Response("Payment is not approved", { status: 200 });
     }
 
-    const { error: lettersError } = await supabaseAdmin
-      .from("letters")
-      .update({
-        is_premium: status === "authorized",
-        ...(status === "authorized" ? {} : { theme_id: "warm-gold" }),
-      })
-      .eq("user_id", userId);
-    if (lettersError) {
-      throw new Error(`Failed to update letter entitlements: ${lettersError.message}`);
+    const amount = Number(payment.transaction_amount ?? authorizedPayment.transaction_amount);
+    const currencyId = payment.currency_id ?? authorizedPayment.currency_id;
+    if (amount !== premiumPrice || currencyId !== "BRL") {
+      console.error("Ignoring Pix payment with unexpected amount or currency.", {
+        authorizedPaymentId: dataId,
+        amount,
+        currencyId,
+      });
+      return new Response("Payment amount or currency does not match", { status: 200 });
     }
 
-    return new Response("Webhook processed", { status: 200 });
+    const paymentId = payment.id == null ? null : String(payment.id);
+    const paidAt = payment.date_approved ?? authorizedPayment.last_modified ?? authorizedPayment.date_created;
+    if (typeof paidAt !== "string" || !Number.isFinite(Date.parse(paidAt))) {
+      throw new Error("Authorized payment has no valid approval timestamp");
+    }
+
+    const { error: applyError } = await supabaseAdmin.rpc("apply_pix_subscription_payment", {
+      p_authorized_payment_id: dataId,
+      p_preapproval_id: preapprovalId,
+      p_payment_id: paymentId,
+      p_user_id: subscription.user_id,
+      p_amount: amount,
+      p_currency_id: currencyId,
+      p_paid_at: paidAt,
+    });
+    if (applyError) {
+      throw new Error(`Failed to apply Pix Premium period: ${applyError.message}`);
+    }
+
+    return new Response("Pix payment processed", { status: 200 });
   } catch (error) {
     console.error("Mercado Pago webhook processing failed:", error);
     return new Response("Webhook processing failed", { status: 500 });

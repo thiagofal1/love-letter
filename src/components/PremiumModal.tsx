@@ -1,13 +1,15 @@
-import { Crown, Check, Loader2, X } from 'lucide-react';
+import { Crown, Check, CreditCard, Loader2, QrCode, X } from 'lucide-react';
+
+type PaymentMethod = 'card' | 'pix';
 
 interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCheckout: () => void;
-  isLoading: boolean;
+  onCheckout: (method: PaymentMethod) => void;
+  loadingMethod: PaymentMethod | null;
 }
 
-export function PremiumModal({ isOpen, onClose, onCheckout, isLoading }: PremiumModalProps) {
+export function PremiumModal({ isOpen, onClose, onCheckout, loadingMethod }: PremiumModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -45,21 +47,38 @@ export function PremiumModal({ isOpen, onClose, onCheckout, isLoading }: Premium
           ))}
         </div>
 
-        <button
-          onClick={onCheckout}
-          disabled={isLoading}
-          className="w-full py-3 bg-primary text-primary-foreground font-bold rounded flex items-center justify-center gap-2 hover:bg-accent transition-colors disabled:opacity-70 shadow-[0_0_15px_rgba(201,160,122,0.2)]"
-        >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <>
-              Assinar por R$ 3,99/mês
-            </>
-          )}
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={() => onCheckout('card')}
+            disabled={loadingMethod !== null}
+            className="w-full py-3 bg-primary text-primary-foreground font-bold rounded flex items-center justify-center gap-2 hover:bg-accent transition-colors disabled:opacity-70 shadow-[0_0_15px_rgba(201,160,122,0.2)]"
+          >
+            {loadingMethod === 'card' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4" />
+                Assinar com cartão — R$ 3,99/mês
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => onCheckout('pix')}
+            disabled={loadingMethod !== null}
+            className="w-full py-3 border border-primary text-primary font-bold rounded flex items-center justify-center gap-2 hover:bg-primary/10 transition-colors disabled:opacity-70"
+          >
+            {loadingMethod === 'pix' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <QrCode className="w-4 h-4" />
+                Pagar este mês com Pix — R$ 3,99
+              </>
+            )}
+          </button>
+        </div>
         <p className="text-[10px] text-center text-muted-foreground mt-3 font-mono">
-          Pagamento seguro via Mercado Pago. Cancele quando quiser.
+          Cartão: cobrança recorrente automática. Pix: pagamento manual; cada pagamento confirmado libera 1 mês de Premium.
         </p>
       </div>
     </div>

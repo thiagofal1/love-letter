@@ -150,6 +150,7 @@ love-letter/
 
 > Política escolhida: cartas não listadas acessíveis por token secreto; uploads
 > exigem login do criador; fotos são entregues por URL temporária a quem tem o
+> link da carta.
 > Em 21/10/2026, as migrações `subscriptions.sql`, `letters_rls.sql` e
 > `storage.sql` foram aplicadas no projeto Supabase ativo; `get-shared-letter`
 > e `create-checkout` também foram implantadas. O frontend ainda não foi
@@ -163,6 +164,16 @@ love-letter/
 > `letters_rls.sql`, e `get-shared-letter` precede a privatização do bucket.
 > Links antigos baseados em slug/Base64 precisarão ser substituídos por novos
 > links após a migração.
+> Em 21/10/2026 foi iniciada localmente a opção de Pix manual junto ao cartão:
+> cada pagamento Pix confirmado libera um mês, sem renovação automática. A
+> interface e as funções de checkout, consulta da carta e webhook foram
+> atualizadas localmente; a migração `pix_subscription.sql` adiciona o prazo de
+> acesso e a idempotência dos pagamentos. `npm run build` e `deno check` das
+> três Edge Functions passaram. O checkout agora envia `notification_url` por
+> preaprovação ao webhook do Supabase; `mpcli` não tem comando para configurar
+> esse campo nem para fornecer a chave de assinatura HMAC. Ainda falta configurar
+> `MP_WEBHOOK_SECRET` no Supabase e a chave correspondente no Mercado Pago, testar
+> o fluxo em ambiente de pagamento de teste, aplicar a migração e implantar.
 
 #### P0 - Bloqueadores antes de divulgar
 - [ ] **Página de apresentação:** transformar a rota inicial em landing page que explica o produto, mostra uma demonstração identificada como tal e apresenta uma ação principal para criar carta.

@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const bucket = "love-photos";
@@ -58,7 +58,7 @@ function storagePath(photo: unknown, ownerId: string | null, supabaseUrl: string
 }
 
 async function createPhotoUrls(
-  admin: ReturnType<typeof createClient>,
+  admin: SupabaseClient<any, "public", "public", any, any>,
   photos: unknown,
   ownerId: string | null,
   supabaseUrl: string,
@@ -179,6 +179,19 @@ serve(async (request) => {
     if (letterError) throw letterError;
     if (!letter) return jsonResponse({ error: "Link da carta inválido ou expirado." }, 404);
 
+    const { data: subscription, error: subscriptionError } = await admin
+      .from("subscriptions")
+      .select("status, payment_method, current_period_end")
+      .eq("user_id", letter.user_id)
+      .maybeSingle();
+    if (subscriptionError) throw subscriptionError;
+    const hasPremium = subscription?.payment_method === "pix"
+      ? Boolean(
+        subscription.current_period_end &&
+          new Date(subscription.current_period_end).getTime() > Date.now(),
+      )
+      : subscription?.status === "authorized";
+
     const signedPhotos = await createPhotoUrls(admin, letter.photos, letter.user_id, supabaseUrl);
     const {
       id: _id,
@@ -187,7 +200,19 @@ serve(async (request) => {
       ...sharedLetter
     } = letter as LetterRecord;
 
-    return jsonResponse({ letter: { ...sharedLetter, photos: signedPhotos } });
+    const themeId = sharedLetter.theme_id;
+    const safeThemeId = !hasPremium &&
+      ["classic-red", "pastel-rose", "dark-velvet"].includes(String(themeId))
+      ? "warm-gold"
+      : themeId;
+    return jsonResponse({
+      letter: {
+        ...sharedLetter,
+        theme_id: safeThemeId,
+        is_premium: hasPremium,
+        photos: signedPhotos,
+      },
+    });
   } catch (error) {
     console.error("Failed to load shared letter:", error);
     return jsonResponse({ error: "Não foi possível carregar esta carta agora." }, 500);

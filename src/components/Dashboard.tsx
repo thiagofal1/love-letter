@@ -49,8 +49,20 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
+      const { data: subscription, error: subscriptionError } = await client
+        .from('subscriptions')
+        .select('status, payment_method, current_period_end')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (subscriptionError) throw subscriptionError;
+      const hasPremium =
+        subscription?.payment_method === 'pix'
+          ? Boolean(subscription.current_period_end && new Date(subscription.current_period_end).getTime() > Date.now())
+          : subscription?.status === 'authorized';
+      const ownedLetters = ((data as LoveLetterData[]) || [])
+        .map((letter) => ({ ...letter, is_premium: hasPremium }));
       const lettersWithPreviews = await Promise.all(
-        ((data as LoveLetterData[]) || []).map(async (letter) => {
+        ownedLetters.map(async (letter) => {
           if (!letter.id || !letter.photos?.length) return letter;
           const { data: photoData, error: photoError } = await client.functions.invoke('get-shared-letter', {
             body: { letterId: letter.id, photoPaths: [letter.photos[0]] },
