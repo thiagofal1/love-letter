@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { LoveLetterData, MemoryItem } from '../types/letter';
 import { DEFAULT_LOVE_LETTER } from '../types/letter';
 import { LoveLetterViewer } from './LoveLetterViewer';
@@ -19,6 +19,10 @@ function generateSlug(partner: string, author: string) {
   return `${clean(partner)}-e-${clean(author)}-${Math.floor(1000 + randomVal * 9000)}`;
 }
 
+function generateShareToken() {
+  return crypto.randomUUID();
+}
+
 interface LoveLetterEditorProps {
   initialData?: LoveLetterData;
   onNavigate?: (view: string, slug?: string) => void;
@@ -26,6 +30,9 @@ interface LoveLetterEditorProps {
 
 export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate }: LoveLetterEditorProps) {
   const [formData, setFormData] = useState<LoveLetterData>(initialData);
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
+  const savedPhotosRef = useRef(initialData.photos || []);
+  const [savedPhotos, setSavedPhotos] = useState(initialData.photos || []);
   const [activeTab, setActiveTab] = useState<'geral' | 'mensagens' | 'memorias' | 'fotos' | 'musica' | 'premium'>('geral');
   const [viewMode, setViewMode] = useState<'split' | 'preview'>('split');
 
@@ -41,6 +48,83 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || !supabase || formData.id) return;
+
+    const client = supabase;
+    const userId = user.id;
+    let active = true;
+    async function loadPremiumStatus() {
+      const { data, error } = await client
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Não foi possível verificar a assinatura Premium:', error);
+        return;
+      }
+      if (active) {
+        setFormData((previous) => ({
+          ...previous,
+          is_premium: data?.status === 'authorized',
+        }));
+      }
+    }
+
+    void loadPremiumStatus();
+    return () => {
+      active = false;
+    };
+  }, [formData.id, user?.id]);
+
+  useEffect(() => {
+    const photos = formData.photos || [];
+    if (!photos.length || !user || !supabase) {
+      setPhotoPreviewUrls([]);
+      return;
+    }
+
+    const client = supabase;
+    const userId = user.id;
+    let active = true;
+    async function loadPhotoPreviews() {
+      try {
+        if (formData.id) {
+          const { data, error } = await client.functions.invoke('get-shared-letter', {
+            body: { letterId: formData.id, photoPaths: photos },
+          });
+          if (error) throw error;
+          if (active) setPhotoPreviewUrls(data?.photos || []);
+          return;
+        }
+
+        const ownedPaths = photos.filter((photo) => photo.startsWith(`${userId}/`));
+        if (!ownedPaths.length) {
+          if (active) setPhotoPreviewUrls([]);
+          return;
+        }
+
+        const { data, error } = await client.storage
+          .from('love-photos')
+          .createSignedUrls(ownedPaths, 60 * 60);
+        if (error) throw error;
+        if (active) {
+          setPhotoPreviewUrls(data.map((item) => item.signedUrl || ''));
+        }
+      } catch (error) {
+        console.error('Não foi possível carregar a prévia das fotos:', error);
+        if (active) setPhotoPreviewUrls([]);
+      }
+    }
+
+    void loadPhotoPreviews();
+    return () => {
+      active = false;
+    };
+  }, [formData.id, formData.photos, user]);
 
   function updateField<K extends keyof LoveLetterData>(key: K, value: LoveLetterData[K]) {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -91,6 +175,22 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     setShareUrl(null);
     setPublishNotice(null);
 
+    if (!isSupabaseConfigured || !supabase) {
+      setPublishNotice({
+        type: 'error',
+        text: 'Configure o Supabase para publicar cartas com links privados e seguros.',
+      });
+      setIsSaving(false);
+      return;
+    }
+
+    if (!user) {
+      setIsAuthOpen(true);
+      setPublishNotice({ type: 'error', text: 'Faça login para salvar a carta.' });
+      setIsSaving(false);
+      return;
+    }
+
     // Rate Limiting Básico (Frontend)
     const lastPublish = localStorage.getItem('last_publish_time');
     if (lastPublish && Date.now() - parseInt(lastPublish, 10) < 60000) {
@@ -102,36 +202,62 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
     try {
       const slug = formData.slug || generateSlug(formData.partner_name, formData.author_name);
 
-      if (isSupabaseConfigured && supabase) {
-        if (!user) {
-          setIsAuthOpen(true);
-          setPublishNotice({ type: 'error', text: 'Faça login para salvar a carta.' });
-          setIsSaving(false);
-          return;
-        }
+      const shareToken = formData.share_token || generateShareToken();
+      const dataToSave = {
+        ...formData,
+        slug,
+        share_token: shareToken,
+        user_id: user.id,
+      };
+      if (!dataToSave.id) delete dataToSave.id;
 
-        const dataToSave = { ...formData, slug, user_id: user.id };
-        if (!dataToSave.id) delete dataToSave.id;
+      const { data: savedLetter, error } = await supabase
+        .from('letters')
+        .upsert(dataToSave)
+        .select('id, slug, is_premium, theme_id')
+        .single();
 
-        const { error } = await supabase
-          .from('letters')
-          .upsert(dataToSave);
-        
-        if (error) {
-          if (error.code === '23505') { // Postgres unique_violation
-             throw new Error('Este Link Personalizado já está em uso. Por favor, escolha outro link na aba Premium.');
-          }
-          throw error;
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Este Link Personalizado já está em uso. Por favor, escolha outro link na aba Premium.');
         }
-        setPublishNotice({ type: 'success', text: 'Sua carta de amor foi publicada com sucesso!' });
-        setShareUrl(`${window.location.origin}/?l=${slug}`);
-        localStorage.setItem('last_publish_time', Date.now().toString());
-      } else {
-        const encoded = btoa(encodeURIComponent(JSON.stringify(formData)));
-        setShareUrl(`${window.location.origin}/?d=${encoded}`);
-        setPublishNotice({ type: 'success', text: 'Carta salva no link local. Configure o Supabase para persistência.' });
-        localStorage.setItem('last_publish_time', Date.now().toString());
+        throw error;
       }
+      const currentPhotos = formData.photos || [];
+      const removedOwnedPhotos = savedPhotosRef.current.filter(
+        (photo) => photo.startsWith(`${user.id}/`) && !currentPhotos.includes(photo),
+      );
+      let cleanupFailed = false;
+      if (removedOwnedPhotos.length) {
+        const { error: cleanupError } = await supabase.storage
+          .from('love-photos')
+          .remove(removedOwnedPhotos);
+        if (cleanupError) {
+          console.error('Carta publicada, mas não foi possível excluir fotos removidas:', cleanupError);
+          cleanupFailed = true;
+        }
+      }
+
+      if (!cleanupFailed) {
+        savedPhotosRef.current = currentPhotos;
+        setSavedPhotos(currentPhotos);
+      }
+      setFormData((previous) => ({
+        ...previous,
+        id: savedLetter.id,
+        slug: savedLetter.slug,
+        share_token: shareToken,
+        is_premium: savedLetter.is_premium,
+        theme_id: savedLetter.theme_id,
+      }));
+      setPublishNotice({
+        type: cleanupFailed ? 'error' : 'success',
+        text: cleanupFailed
+          ? 'A carta foi publicada, mas não foi possível excluir algumas fotos removidas. Tente removê-las novamente.'
+          : 'Sua carta de amor foi publicada com sucesso!',
+      });
+      setShareUrl(`${window.location.origin}/?l=${encodeURIComponent(shareToken)}`);
+      localStorage.setItem('last_publish_time', Date.now().toString());
     } catch (err: any) {
       console.error('Publish error:', err);
       const message = err.message || err.error_description || err.toString();
@@ -166,9 +292,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session?.access_token}`
             },
-            body: JSON.stringify({
-                returnUrl: window.location.href
-            })
+            body: JSON.stringify({})
         });
 
         const data = await res.json();
@@ -380,6 +504,9 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
               {activeTab === 'fotos' && (
                 <PhotoUploader
                   photos={formData.photos || []}
+                  previewPhotos={photoPreviewUrls}
+                  savedPhotos={savedPhotos}
+                  userId={user?.id || null}
                   onChange={(photos) => updateField('photos', photos)}
                 />
               )}
@@ -561,7 +688,7 @@ export function LoveLetterEditor({ initialData = DEFAULT_LOVE_LETTER, onNavigate
         )}
 
         <main className={`flex-1 overflow-y-auto h-[calc(100vh-4rem)] bg-background ${viewMode === 'split' ? 'hidden md:block' : ''}`}>
-          <LoveLetterViewer data={formData} />
+          <LoveLetterViewer data={{ ...formData, photos: photoPreviewUrls }} />
         </main>
       </div>
     </div>

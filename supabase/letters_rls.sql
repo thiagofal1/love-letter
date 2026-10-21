@@ -1,13 +1,24 @@
--- Execute este arquivo depois de supabase/letters_user_id.sql.
--- Cartas publicadas continuam legíveis pelo viewer compartilhado.
+-- Execute depois de supabase/letters_user_id.sql e supabase/subscriptions.sql.
+-- Visitantes recebem cartas apenas pela Edge Function get-shared-letter,
+-- que exige o token secreto e nunca expõe a tabela via acesso anonimo.
 
 alter table public.letters enable row level security;
 
+alter table public.letters
+  add column if not exists share_token text;
+
+update public.letters
+set share_token = gen_random_uuid()::text
+where share_token is null;
+
+alter table public.letters
+  alter column share_token set default gen_random_uuid()::text,
+  alter column share_token set not null;
+
+create unique index if not exists letters_share_token_key
+  on public.letters(share_token);
+
 drop policy if exists "Public can view letters" on public.letters;
-create policy "Public can view letters"
-on public.letters for select
-to anon
-using (true);
 
 drop policy if exists "Owners can view letters" on public.letters;
 create policy "Owners can view letters"

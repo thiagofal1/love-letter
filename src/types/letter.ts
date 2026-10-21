@@ -8,6 +8,7 @@ export interface LoveLetterData {
   id?: string;
   user_id?: string | null;
   slug?: string;
+  share_token?: string;
   partner_name: string;
   author_name: string;
   relationship_start_date: string; // ISO or YYYY-MM-DD
@@ -22,6 +23,7 @@ export interface LoveLetterData {
   footer_text?: string;
   spotify_playlist_url?: string;
   photos?: string[];
+  photo_preview_url?: string;
   theme_id?: string;
   is_premium?: boolean;
   created_at?: string;

@@ -40,12 +40,18 @@ serve(async (req) => {
       });
     }
 
-    const { returnUrl } = await req.json();
-
     const mpAccessToken = Deno.env.get("MP_ACCESS_TOKEN");
     if (!mpAccessToken) {
       throw new Error("Missing MP_ACCESS_TOKEN");
     }
+
+    const appBaseUrl = new URL(
+      Deno.env.get("APP_BASE_URL") ?? "https://love.thigasfal.dev",
+    );
+    if (appBaseUrl.protocol !== "https:" || appBaseUrl.username || appBaseUrl.password) {
+      throw new Error("APP_BASE_URL must be an HTTPS URL without credentials");
+    }
+    const backUrl = new URL("/", appBaseUrl).toString();
 
     // Create a Preapproval (Subscription) plan in Mercado Pago
     const response = await fetch("https://api.mercadopago.com/preapproval", {
@@ -64,7 +70,7 @@ serve(async (req) => {
           transaction_amount: 3.99,
           currency_id: "BRL",
         },
-        back_url: returnUrl || "https://love.thigasfal.dev",
+        back_url: backUrl,
       }),
     });
 
@@ -81,7 +87,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    await supabaseAdmin.from("subscriptions").upsert(
+    const { error: subscriptionError } = await supabaseAdmin.from("subscriptions").upsert(
       {
         user_id: user.id,
         mp_preapproval_id: data.id,
@@ -91,6 +97,9 @@ serve(async (req) => {
       },
       { onConflict: "user_id" }
     );
+    if (subscriptionError) {
+      throw new Error(`Failed to save subscription: ${subscriptionError.message}`);
+    }
 
     return new Response(JSON.stringify({ init_point: data.init_point }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

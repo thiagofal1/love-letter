@@ -5,7 +5,7 @@ import { AuthDialog } from './AuthDialog';
 import type { LoveLetterData } from '../types/letter';
 import {
   Heart, Plus, ExternalLink, Pencil, Trash2, Link,
-  Check, Loader2, LogOut, LayoutDashboard, AlertCircle,
+  Check, Loader2, LogOut, LayoutDashboard, AlertCircle, RefreshCw,
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -19,6 +19,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [rotatingLinkId, setRotatingLinkId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
@@ -37,16 +38,31 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       return;
     }
 
+    const client = supabase;
+    const userId = user.id;
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await client
         .from('letters')
-        .select('id, slug, partner_name, author_name, relationship_start_date, hero_title, is_premium, created_at, photos')
-        .eq('user_id', user.id)
+        .select('id, slug, share_token, partner_name, author_name, relationship_start_date, hero_title, is_premium, created_at, photos')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setLetters((data as LoveLetterData[]) || []);
+      const lettersWithPreviews = await Promise.all(
+        ((data as LoveLetterData[]) || []).map(async (letter) => {
+          if (!letter.id || !letter.photos?.length) return letter;
+          const { data: photoData, error: photoError } = await client.functions.invoke('get-shared-letter', {
+            body: { letterId: letter.id, photoPaths: [letter.photos[0]] },
+          });
+          if (photoError) {
+            console.error(`Não foi possível carregar a foto da carta ${letter.id}:`, photoError);
+            return letter;
+          }
+          return { ...letter, photo_preview_url: photoData?.photos?.[0] };
+        }),
+      );
+      setLetters(lettersWithPreviews);
     } catch (err) {
       console.error('Erro ao buscar cartas:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar suas cartas.');
@@ -66,8 +82,20 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         .eq('id', id);
 
       if (deleteError) throw deleteError;
+      const letter = letters.find((item) => item.id === id);
       setLetters((prev) => prev.filter((l) => l.id !== id));
       setConfirmDeleteId(null);
+
+      const ownedPhotos = (letter?.photos || []).filter((photo) => photo.startsWith(`${user?.id}/`));
+      if (ownedPhotos.length) {
+        const { error: photoDeleteError } = await supabase.storage
+          .from('love-photos')
+          .remove(ownedPhotos);
+        if (photoDeleteError) {
+          console.error('Carta excluída, mas não foi possível remover suas fotos:', photoDeleteError);
+          setError('A carta foi excluída, mas não foi possível remover algumas fotos armazenadas.');
+        }
+      }
     } catch (err) {
       console.error('Erro ao excluir carta:', err);
       setError(err instanceof Error ? err.message : 'Erro ao excluir carta.');
@@ -76,11 +104,37 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   }
 
-  function copyLink(slug: string) {
-    const url = `${window.location.origin}/?l=${slug}`;
+  function copyLink(shareToken: string) {
+    const url = `${window.location.origin}/?l=${encodeURIComponent(shareToken)}`;
     navigator.clipboard.writeText(url);
-    setCopiedSlug(slug);
+    setCopiedSlug(shareToken);
     setTimeout(() => setCopiedSlug(null), 2000);
+  }
+
+  async function rotateShareLink(letter: LoveLetterData) {
+    if (!supabase || !user || !letter.id) return;
+    if (!window.confirm('O link atual deixará de abrir imediatamente. URLs de fotos já emitidas podem permanecer válidas por até 1 hora. Deseja gerar um novo link?')) return;
+
+    setRotatingLinkId(letter.id);
+    setError(null);
+    try {
+      const shareToken = crypto.randomUUID();
+      const { error: updateError } = await supabase
+        .from('letters')
+        .update({ share_token: shareToken })
+        .eq('id', letter.id)
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+      setLetters((current) => current.map((item) =>
+        item.id === letter.id ? { ...item, share_token: shareToken } : item,
+      ));
+    } catch (error) {
+      console.error('Não foi possível revogar o link anterior:', error);
+      setError(error instanceof Error ? error.message : 'Não foi possível gerar um novo link.');
+    } finally {
+      setRotatingLinkId(null);
+    }
   }
 
   function formatDate(dateStr: string) {
@@ -230,9 +284,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   >
                     {/* Preview Header */}
                     <div className="h-28 bg-secondary flex items-center justify-center relative overflow-hidden">
-                      {letter.photos && letter.photos.length > 0 ? (
+                      {letter.photo_preview_url ? (
                         <img
-                          src={letter.photos[0]}
+                          src={letter.photo_preview_url}
                           alt={`${letter.partner_name} & ${letter.author_name}`}
                           className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                         />
@@ -267,11 +321,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                     <div className="border-t border-border px-4 py-3 flex items-center gap-1">
                       {/* Ver */}
                       <a
-                        href={`/?l=${letter.slug}`}
+                        href={`/?l=${encodeURIComponent(letter.share_token || '')}`}
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                         title="Ver carta"
+                        aria-disabled={!letter.share_token}
+                        onClick={(event) => {
+                          if (!letter.share_token) event.preventDefault();
+                        }}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -287,15 +345,29 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
                       {/* Copiar Link */}
                       <button
-                        onClick={() => letter.slug && copyLink(letter.slug)}
+                        onClick={() => letter.share_token && copyLink(letter.share_token)}
+                        disabled={!letter.share_token}
                         className="p-2 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                         title="Copiar link"
                       >
-                        {copiedSlug === letter.slug ? (
+                        {copiedSlug === letter.share_token ? (
                           <Check className="w-4 h-4 text-primary" />
                         ) : (
                           <Link className="w-4 h-4" />
                         )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void rotateShareLink(letter)}
+                        disabled={!letter.share_token || rotatingLinkId === letter.id}
+                        className="p-2 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                        title="Revogar link atual e gerar outro"
+                        aria-label={`Revogar link da carta de ${letter.partner_name} e gerar outro`}
+                      >
+                        {rotatingLinkId === letter.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <RefreshCw className="w-4 h-4" />}
                       </button>
 
                       {/* Spacer */}

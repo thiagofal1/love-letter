@@ -4,10 +4,14 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const BUCKET = 'love-photos';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_PHOTOS = 10;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 interface PhotoUploaderProps {
   photos: string[];
+  previewPhotos: string[];
+  savedPhotos: string[];
+  userId: string | null;
   onChange: (photos: string[]) => void;
 }
 
@@ -24,14 +28,20 @@ function uploadName(file: File) {
   return `uploads/${id}.${extensionFor(file)}`;
 }
 
-export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
+export function PhotoUploader({ photos, previewPhotos, savedPhotos, userId, onChange }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [removingPhoto, setRemovingPhoto] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
     setError(null);
+
+    if (!userId) {
+      setError('Faça login para enviar fotos privadas para sua carta.');
+      return;
+    }
 
     if (!isSupabaseConfigured || !supabase) {
       setError('Configure o Supabase e o bucket love-photos para enviar imagens.');
@@ -40,6 +50,10 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
     const client = supabase;
 
     const selected = Array.from(files);
+    if (photos.length + selected.length > MAX_PHOTOS) {
+      setError(`Cada carta pode ter no máximo ${MAX_PHOTOS} fotos.`);
+      return;
+    }
     const invalid = selected.find((file) => !ACCEPTED_TYPES.has(file.type) || file.size > MAX_FILE_SIZE);
     if (invalid) {
       setError('Use imagens JPG, PNG, WebP ou GIF de até 10 MB.');
@@ -48,16 +62,31 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
 
     setIsUploading(true);
     try {
-      const uploadedUrls = await Promise.all(selected.map(async (file) => {
-        const path = uploadName(file);
+      const uploadResults = await Promise.allSettled(selected.map(async (file) => {
+        const path = `${userId}/${uploadName(file).replace('uploads/', '')}`;
         const { error: uploadError } = await client.storage
           .from(BUCKET)
           .upload(path, file, { contentType: file.type, upsert: false });
         if (uploadError) throw uploadError;
 
-        return client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        return path;
       }));
-      onChange([...photos, ...uploadedUrls]);
+      const uploadedPaths = uploadResults
+        .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled')
+        .map((result) => result.value);
+      const failedUpload = uploadResults.find((result) => result.status === 'rejected');
+
+      if (failedUpload?.status === 'rejected') {
+        if (uploadedPaths.length) {
+          const { error: cleanupError } = await client.storage.from(BUCKET).remove(uploadedPaths);
+          if (cleanupError) {
+            console.error('Não foi possível remover uploads parciais:', cleanupError);
+          }
+        }
+        throw failedUpload.reason;
+      }
+
+      onChange([...photos, ...uploadedPaths]);
     } catch (uploadError) {
       console.error('Erro ao enviar foto:', uploadError);
       const uploadMessage = uploadError instanceof Error ? uploadError.message : 'erro desconhecido';
@@ -75,7 +104,24 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
     }
   }
 
-  function removePhoto(index: number) {
+  async function removePhoto(index: number) {
+    const photo = photos[index];
+    if (!photo) return;
+
+    if (userId && photo.startsWith(`${userId}/`) && !savedPhotos.includes(photo) && supabase) {
+      setRemovingPhoto(photo);
+      try {
+        const { error: removeError } = await supabase.storage.from(BUCKET).remove([photo]);
+        if (removeError) throw removeError;
+      } catch (removeError) {
+        console.error('Não foi possível remover a foto enviada:', removeError);
+        setError('Não foi possível excluir esta foto do armazenamento. Tente novamente.');
+        return;
+      } finally {
+        setRemovingPhoto(null);
+      }
+    }
+
     onChange(photos.filter((_, photoIndex) => photoIndex !== index));
   }
 
@@ -116,12 +162,15 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
         <div className="grid grid-cols-3 gap-2">
           {photos.map((photo, index) => (
             <div key={photo} className="group relative aspect-square overflow-hidden rounded border border-border bg-muted">
-              <img src={photo} alt={`Foto ${index + 1} do casal`} className="h-full w-full object-cover" />
+              {previewPhotos[index] && (
+                <img src={previewPhotos[index]} alt={`Foto ${index + 1} do casal`} className="h-full w-full object-cover" />
+              )}
               <button
                 type="button"
-                onClick={() => removePhoto(index)}
+                onClick={() => void removePhoto(index)}
+                disabled={removingPhoto === photo}
                 aria-label={`Remover foto ${index + 1}`}
-                className="absolute right-1 top-1 rounded bg-background/90 p-1.5 text-muted-foreground opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100 focus:opacity-100"
+                className="absolute right-1 top-1 rounded bg-background/90 p-1.5 text-muted-foreground opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100 focus:opacity-100 disabled:opacity-60"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -132,6 +181,9 @@ export function PhotoUploader({ photos, onChange }: PhotoUploaderProps) {
 
       {!isSupabaseConfigured && (
         <p className="flex gap-2 text-xs leading-relaxed text-muted-foreground"><Upload className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />O upload fica disponível depois de configurar as variáveis do Supabase.</p>
+      )}
+      {!userId && isSupabaseConfigured && (
+        <p className="flex gap-2 text-xs leading-relaxed text-muted-foreground"><Upload className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />Entre na sua conta para enviar fotos; somente quem receber o link da carta poderá visualizá-las.</p>
       )}
     </section>
   );

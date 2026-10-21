@@ -21,9 +21,9 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get('view');
-    const slug = params.get('l');
+    const shareToken = params.get('l');
     const editSlug = params.get('edit');
-    const encodedData = params.get('d');
+    const legacyEncodedData = params.get('d');
 
     async function loadRoute() {
       // Rota: Dashboard
@@ -53,34 +53,20 @@ export default function App() {
         }
       }
 
-      // Rota: Viewer via base64
-      if (encodedData) {
+      // Rota: Viewer via token secreto de compartilhamento
+      if (shareToken && isSupabaseConfigured && supabase) {
         try {
-          setLetterData(JSON.parse(decodeURIComponent(atob(encodedData))));
-          setCurrentView('viewer');
-          setLoading(false);
-          return;
-        } catch {
-          console.error('Falha ao decodificar dados da carta.');
-        }
-      }
+          const { data, error } = await supabase.functions.invoke('get-shared-letter', {
+            body: { shareToken },
+          });
 
-      // Rota: Viewer via slug
-      if (slug && isSupabaseConfigured && supabase) {
-        try {
-          const { data, error } = await supabase
-            .from('letters')
-            .select('*')
-            .eq('slug', slug)
-            .single();
-
-          if (error || !data) {
+          if (error || !data?.letter) {
             setIsNotFound(true);
             setLoading(false);
             return;
           }
 
-          setLetterData(data as LoveLetterData);
+          setLetterData(data.letter as LoveLetterData);
           setCurrentView('viewer');
           setLoading(false);
           return;
@@ -89,6 +75,12 @@ export default function App() {
           setLoading(false);
           return;
         }
+      }
+
+      if (shareToken || legacyEncodedData) {
+        setIsNotFound(true);
+        setLoading(false);
+        return;
       }
 
       // Rota padrão: Editor

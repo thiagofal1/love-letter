@@ -2,3 +2,6 @@ project_id = "wjbqbzvpxsjdektxeedw"
 
 [functions.webhook-mp]
 verify_jwt = false
+
+[functions.get-shared-letter]
+verify_jwt = false

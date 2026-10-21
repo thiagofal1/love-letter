@@ -148,12 +148,25 @@ love-letter/
 
 ### 🚧 Fase 11 - Prontidão para divulgação, privacidade e qualidade (Pendente)
 
+> Política escolhida: cartas não listadas acessíveis por token secreto; uploads
+> exigem login do criador; fotos são entregues por URL temporária a quem tem o
+> link da carta. O código local foi atualizado para suportar essa política,
+> incluindo a proteção local dos direitos Premium, mas as migrações SQL e as
+> Edge Functions ainda precisam ser implantadas e verificadas no Supabase
+> antes de marcar os itens abaixo como concluídos. Configure também os secrets
+> `MP_WEBHOOK_SECRET` e `APP_BASE_URL` nas Edge Functions antes de habilitar
+> notificações e checkout em produção. Na migração do banco, execute
+> `subscriptions.sql` antes de `letters_rls.sql`; implante
+> `get-shared-letter` antes de tornar o bucket privado.
+> Links antigos baseados em slug/Base64 precisarão ser substituídos por novos
+> links após a migração.
+
 #### P0 - Bloqueadores antes de divulgar
 - [ ] **Página de apresentação:** transformar a rota inicial em landing page que explica o produto, mostra uma demonstração identificada como tal e apresenta uma ação principal para criar carta.
 - [ ] **Rotas e descoberta:** separar a página pública do editor; manter a criação em uma rota própria e garantir metadados e URLs apropriados para cada experiência.
 - [ ] **Privacidade das cartas:** decidir se cartas são públicas, privadas ou acessíveis por link; ajustar RLS para que a política efetiva corresponda à decisão. Slugs não substituem autorização.
 - [ ] **Privacidade e segurança de fotos:** restringir upload e acesso conforme a política escolhida; validar usuário, propriedade, tipo, tamanho e quantidade; definir remoção e retenção.
-- [ ] **Direitos Premium:** usar assinatura verificada no servidor como fonte de direitos; bloquear alteração de `is_premium` e campos protegidos pelo cliente; validar eventos de pagamento e restringir URLs de retorno.
+- [ ] **Direitos Premium:** usar assinatura verificada no servidor como fonte de direitos; a migração local bloqueia alteração de `is_premium` pelo cliente, o webhook valida a assinatura HMAC do Mercado Pago e o checkout usa uma URL de retorno configurada no servidor; ainda falta aplicar, configurar secrets e validar no Supabase/Mercado Pago.
 - [ ] **Ciclo de assinatura:** testar pendente, autorizada, pausada, cancelada, recusada e falha de renovação no ambiente de testes do Mercado Pago.
 - [ ] **Consentimento e dados pessoais:** bloquear analytics não essencial até consentimento; oferecer aceitar, recusar e gerenciar preferências; persistir escolhas e revisar política de privacidade e termos.
 - [ ] **Critério de liberação:** executar testes de acesso como visitante anônimo, proprietário e outro usuário; confirmar que manipular chamadas do navegador não concede acesso a cartas ou recursos pagos.

@@ -21,7 +21,7 @@ export function NotFound() {
         
         <p className="text-muted-foreground text-sm leading-relaxed mb-8 font-mono">
           O amor pode estar no ar, mas a carta que você procura não está aqui.
-          Talvez o link esteja incorreto ou ela tenha sido apagada.
+          Talvez o link esteja incorreto, tenha sido revogado ou a carta tenha sido apagada.
         </p>
 
         <a 
